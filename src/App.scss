@@ -1,0 +1,239 @@
+:root {
+  --carta_ancho: 9vh;
+  --carta_altura: 14vh;
+  --carta_tamano_letra: 2rem;
+  --carta_tamano_letra_2: 1rem;
+}
+
+/* Ensure proper spacing for fixed navbar */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Prevent content from being hidden behind fixed navbar */
+main {
+  min-height: calc(100vh - 80px); /* Account for navbar height */
+}
+
+.glass-box {
+  backdrop-filter: blur(19px);
+  -webkit-backdrop-filter: blur(19px);
+  background: hsla(0, 0%, 100%, 0.07);
+  // background: red;
+  border: 1px solid hsla(0, 0%, 100%, 0.18);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px 0 rgba(201, 18, 45, 0.37);
+}
+
+/* Estilo por defecto para ambas imágenes */
+#logo-light {
+  display: block;
+}
+
+#logo-dark {
+  display: none;
+}
+
+/* Cambio de estilo para tema oscuro */
+.dark #logo-light {
+  display: none;
+}
+
+.dark #logo-dark {
+  display: block;
+}
+
+#root {
+  margin: 0 auto;
+}
+
+body {
+  background-image: linear-gradient(to right top, #0e0f11, #0d1011, #0d1111, #0e1210, #11120f);
+  background-repeat: no-repeat;
+}
+
+.poker_card {
+  background: radial-gradient(snow, white);
+  display: inline-block;
+  position: relative;
+  padding: 0;
+  width: var(--carta_ancho);
+  height: var(--carta_altura);
+  color: black;
+  margin-left: 1%;
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  transform: rotate(-1deg) translateY(10px);
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-weight: 700;
+  animation: entrada_carta 0.5s ease-in-out;
+
+  @keyframes entrada_carta {
+    0% {
+      opacity: 0;
+      transform: translateX(-280%) translateY(40%) rotate(-45deg);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0) translateY(0) rotate(0);
+    }
+  }
+
+  &:hover {
+    transform: rotate(-5deg) translateY(10px);
+  }
+
+  // Tipo de carta
+  & h1 {
+    position: absolute;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-weight: 800;
+    font-size: var(--carta_tamano_letra);
+    top: 20px;
+    left: 20px;
+  }
+
+  // Rango
+  & .rango_1 {
+    position: absolute;
+    font-weight: 800;
+    font-size: var(--carta_tamano_letra_2);
+    top: 0px;
+    left: 1px;
+    margin: 0;
+  }
+
+  // Rango # 2
+  & .rango_2 {
+    position: absolute;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-weight: 800;
+    font-size: var(--carta_tamano_letra_2);
+    bottom: 0;
+    margin: 0;
+    right: 2px;
+  }
+
+  & .estrellas {
+    display: flex;
+    left: auto;
+    align-self: end;
+    width: 55%;
+    left: auto;
+    margin-left: auto;
+  }
+}
+
+@media (min-device-width: 300px) and (max-device-width: 1024px) {
+  .poker_card {
+    position: relative;
+    background: radial-gradient(snow, white);
+    display: inline-block;
+    width: 2.4vh;
+    height: 6vh;
+    color: black;
+    margin-left: 0.5%;
+    border: 1px solid black;
+    border-radius: 0.5rem;
+    transform: rotate(-1deg) translateY(10px);
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+
+    &:hover {
+      transform: rotate(-5deg) translateY(10px);
+    }
+
+    // Tipo de carta
+    & h1 {
+      position: absolute;
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 0.9rem;
+      position: absolute;
+      top: 20%;
+      left: 40%;
+      right: 40%;
+    }
+
+    // Rango
+    & .rango_1 {
+      position: absolute;
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 0.7rem;
+      top: -1px;
+      left: 1px;
+    }
+
+    // Rango # 2
+    & .rango_2 {
+      position: absolute;
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+      font-weight: 800;
+      font-size: 0.7rem;
+      bottom: 0;
+      right: 2px;
+    }
+  }
+}
+
+.bg-dots-top {
+  background-image: url('/images/bgdots.png');
+  background-repeat: no-repeat;
+  background-position: top right;
+  background-size: content;
+}
+
+.background-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.background-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/images/halftone.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  animation: pulse 2s infinite;
+  opacity: 0.5;
+  z-index: 0; /* Ajusta el z-index para que esté por debajo de los elementos internos */
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0; /* Comienza completamente visible */
+    transform: scale(0.1); /* Escala normal */
+  }
+  50% {
+    opacity: 1; /* Desaparece a la mitad del pulso */
+    transform: scale(0.5); /* Escala aumentada */
+  }
+  100% {
+    opacity: 0; /* Vuelve a aparecer al final del pulso */
+    transform: scale(1); /* Vuelve a la escala normal */
+  }
+}
+
+.bg-dots-bottom {
+  background-image: url('/images/bgdots2.png');
+  background-size: content;
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  bottom: 60%;
+}
+
+.text-xxs {
+  font-size: 0.5rem; /* Ajusta el tamaño según sea necesario */
+}

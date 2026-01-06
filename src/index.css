@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+:root {
+  /* Primary Colors - Block Lotto Green */
+  --np-primary: #22c55e; /* Green */
+  --np-primary-hover: #16a34a;
+  --np-primary-active: #15803d;
+
+  /* Secondary Colors */
+  --np-secondary: #14b8a6; /* Teal */
+
+  /* Surface Colors - Light Theme */
+  --np-surface: #ffffff; /* White background */
+  --np-surface-variant: #f9fafb;
+  --np-surface-hover: #f3f4f6;
+
+  /* Text Colors */
+  --np-on-surface: #111827; /* Dark gray text */
+  --np-on-surface-variant: #6b7280;
+  --np-on-primary: #ffffff;
+
+  /* Accent Colors */
+  --np-accent: #06b6d4; /* Cyan/Blue */
+  --np-accent-hover: #0891b2;
+
+  /* Borders */
+  --np-border: #e5e7eb;
+  --np-border-variant: #d1d5db;
+
+  /* Glows and Effects */
+  --np-glow-primary: 0 0 20px rgba(34, 197, 94, 0.2);
+  --np-glow-accent: 0 0 20px rgba(6, 182, 212, 0.2);
+
+  /* Gradients */
+  --np-gradient-primary: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  --np-gradient-surface: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  --np-gradient-accent: linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%);
+
+  /* Sizing */
+  --np-modal-min-height: 700px;
+  --np-modal-max-height: 800px;
+}
+
+/* NOWPayments Modal Overflow Prevention */
+.np-modal-overlay {
+  overflow-y: auto !important;
+  padding: var(--np-spacing-xl) var(--np-spacing-md) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+}
+
+.np-modal {
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  margin: var(--np-spacing-md) !important;
+}
+
+.np-modal__content {
+  max-height: calc(90vh - 8rem) !important;
+  overflow-y: auto !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .np-modal-overlay {
+    padding: var(--np-spacing-md) !important;
+  }
+
+  .np-modal {
+    max-height: 95vh !important;
+    margin: var(--np-spacing-sm) !important;
+    width: calc(100vw - 2rem) !important;
+  }
+
+  .np-modal__content {
+    max-height: calc(95vh - 4rem) !important;
+  }
+}

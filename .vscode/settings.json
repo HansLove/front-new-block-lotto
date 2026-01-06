@@ -1,0 +1,79 @@
+{
+  // === CODE FORMATTING AND QUALITY ===
+  // Auto-format on save using Prettier
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.requireConfig": true, // Only use Prettier if config file exists
+
+  // Automatic actions on save: organize imports and fix ESLint errors
+  "editor.codeActionsOnSave": {
+    // "source.organizeImports": "explicit", Not necessary with ESLint
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // === ESLINT CONFIGURATION ===
+  // Define which file types ESLint will validate
+  "eslint.validate": ["javascript", "typescript", "typescriptreact"],
+
+  // === TYPESCRIPT ENHANCEMENTS ===
+  // Auto-update imports when moving files
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  // Prefer absolute imports over relative ones
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  // Auto-import from package.json and suggest auto-imports
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.suggest.autoImports": true,
+
+  // === GIT INTEGRATION ===
+  // Auto-fetch remote changes and simplify commits
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+  "scm.defaultViewMode": "tree",
+
+  // === FILE ASSOCIATIONS ===
+  // Define which syntax to use for different file types
+  "files.associations": {
+    "*.yml": "yaml",
+    "*.yaml": "yaml",
+    "Dockerfile*": "dockerfile",
+    ".env*": "properties"
+  },
+
+  // === YAML SUPPORT ===
+  // Enable validation and autocompletion for YAML files
+  "yaml.validate": true,
+  "yaml.completion": true,
+
+  // === FILE EXCLUSIONS ===
+  // Hide folders you don't need to see in the explorer
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/coverage": true,
+    "**/.nyc_output": true,
+    "**/build": true,
+    "**/dist": true
+  },
+
+  // === SEARCH EXCLUSIONS ===
+  // Folders ignored when searching (improves performance)
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/coverage": true,
+    "**/.vscode": true
+  },
+
+  // === TERMINAL CONFIGURATION ===
+  // Integrated terminal configuration for development
+  "terminal.integrated.copyOnSelection": true,
+  "terminal.integrated.rightClickBehavior": "paste",
+
+  // === EDITOR ENHANCEMENTS ===
+  // Settings that improve development experience
+  "editor.suggestSelection": "first", // Select first suggestion by default
+  "editor.tabCompletion": "on", // Tab completion
+  "editor.wordWrap": "on" // Wrap long lines
+}

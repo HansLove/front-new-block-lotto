@@ -1,0 +1,15 @@
+{
+  "entry": ["src/main.tsx", "src/App.tsx"],
+  "project": ["src/**/*.{ts,tsx,js,jsx}"],
+  "ignore": [
+    "**/*.test.{ts,tsx}",
+    "**/*.spec.{ts,tsx}",
+    "**/*.stories.{ts,tsx}",
+    "**/vite.config.ts",
+    "**/tailwind.config.js",
+    "**/postcss.config.js"
+  ],
+  "ignoreDependencies": ["@types/*", "autoprefixer"],
+  "ignoreBinaries": ["only-allow"],
+  "includeEntryExports": true
+}

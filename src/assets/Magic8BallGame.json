@@ -1,0 +1,22 @@
+[
+    {"name":"It is certain!","color":"green"},
+    {"name":"It is decidedly so!","color":"green"},
+    {"name":"Without a doub!","color":"green"},
+    {"name":"Yes definitely","color":"green"},
+    {"name":"You may rely on it","color":"green"},
+    {"name":"As i see it,yes","color":"green"},
+    {"name":"Most likely","color":"green"},
+    {"name":"Outlook good","color":"green"},
+    {"name":"Yes","color":"green"},
+    {"name":"Signs point to yes","color":"green"},
+    {"name":"Reply hazy,try again","color":"yellow"},
+    {"name":"Ask again later","color":"yellow"},
+    {"name":"Better not tell you know","color":"yellow"},
+    {"name":"Cannot predict now","color":"yellow"},
+    {"name":"Concetrate and ask again","color":"yellow"},
+    {"name":"Dont count on it","color":"red"},
+    {"name":"My reply is no","color":"red"},
+    {"name":"My reply is no","color":"red"},
+    {"name":"Outlook not so good","color":"red"},
+    {"name":"Very doubtful","color":"red"}
+]

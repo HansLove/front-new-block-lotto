@@ -1,0 +1,262 @@
+
+:root{
+    --speed:0.1s;
+}
+
+.scene .cube {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: translateZ(-100px);
+}
+
+
+.contenedor_main_dice{
+    align-items: center;
+    align-self: center;
+    align-content: center;
+}
+
+ .hdln {
+     width: 100%;
+     text-align: center;
+     font-weight: normal;
+     font-family: "Rancho";
+     text-transform : uppercase;
+}
+ .hdln--primary {
+     font-size: 5em;
+     margin: 0;
+     animation: redlight 0.3s infinite alternate linear;
+}
+ .btn {
+     cursor: pointer;
+     width: 200px;
+     height: 30px;
+     border: none;
+     border-radius: 5px;
+     font-family : "Rancho";
+     cursor : pointer;
+}
+ .roll__three-d-box--front, .roll__three-d-box--back {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     flex-direction: row;
+     flex-wrap: nowrap;
+     width: 100%;
+     height: 100%;
+     position: absolute;
+     top: 0;
+     left: 0;
+     background: black;
+     padding: 15px 10px;
+     color: white;
+     pointer-events: none;
+     box-sizing: border-box;
+     text-transform: uppercase;
+}
+ .roll--three-d {
+     perspective: 200px;
+     transition: all 0.07s linear;
+     position: relative;
+     cursor: pointer;
+}
+ .scene .cube__face--left i:nth-child(1) {
+     grid-area: 1 / 1 / 1 / 1;
+     
+}
+ .scene .cube__face--left i:nth-child(2) {
+     grid-area: 2 / 1 / 2 / 1;
+}
+ .scene .cube__face--left i:nth-child(3) {
+     grid-area: 3 / 1 / 3 / 1;
+}
+ .scene .cube__face--left i:nth-child(4) {
+     grid-area: 1 / 3 / 1 / 3;
+}
+ .scene .cube__face--left i:nth-child(5) {
+     grid-area: 2 / 3 / 2 / 3;
+}
+ .scene .cube__face--left i:nth-child(6) {
+     grid-area: 3 / 3 / 3 / 3;
+}
+ .scene .cube__face--right i:nth-child(1) {
+     grid-area: 1 / 1 / 1 / 1;
+}
+ .scene .cube__face--right i:nth-child(2) {
+     grid-area: 3 / 1 / 3 / 1;
+}
+ .scene .cube__face--right i:nth-child(3) {
+     grid-area: 2 / 2 / 2 / 2;
+}
+ .scene .cube__face--right i:nth-child(4) {
+     grid-area: 1 / 3 / 1 / 3;
+}
+ .scene .cube__face--right i:nth-child(5) {
+     grid-area: 3 / 3 / 3 / 3;
+}
+ .scene .cube__face--bottom i:nth-child(1) {
+     grid-area: 1 / 1 / 1 / 1;
+}
+ .scene .cube__face--bottom i:nth-child(2) {
+     grid-area: 3 / 1 / 3 / 1;
+}
+ .scene .cube__face--bottom i:nth-child(3) {
+     grid-area: 1 / 3 / 1 / 3;
+}
+ .scene .cube__face--bottom i:nth-child(4) {
+     grid-area: 3 / 3 / 3 / 3;
+}
+ .scene .cube__face--top i:nth-child(1) {
+     grid-area: 1 / 1 / 1 / 1;
+}
+ .scene .cube__face--top i:nth-child(2) {
+     grid-area: 2 / 2 / 2 / 2;
+}
+ .scene .cube__face--top i:nth-child(3) {
+     grid-area: 3 / 3 / 3 / 3;
+}
+ .scene .cube__face--back i:nth-child(1) {
+     grid-area: 1 / 1 / 1 / 1;
+}
+ .scene .cube__face--back i:nth-child(2) {
+     grid-area: 3 / 3 / 3 / 3;
+}
+ .scene .cube__face--front i:nth-child(1) {
+     grid-area: 2 / 2 / 2 / 2;
+}
+ .scene:after, .scene .cube__face i:after {
+     display: block;
+     content: "";
+     position: absolute;
+}
+ .roll {
+     margin-bottom: 100px;
+     min-height : 30px;
+}
+ .roll:hover .roll__three-d-box, .roll:focus .roll__three-d-box {
+     transform: translateZ(-25px) rotateX(90deg);
+}
+ .roll__three-d-box {
+     transition: all 0.3s ease-out;
+     transform: translateZ(-25px);
+     transform-style: preserve-3d;
+     pointer-events: none;
+     position: absolute;
+     top: 0;
+     left: 0;
+     display: block;
+     width: 100%;
+     height: 100%;
+}
+ .roll__three-d-box--front {
+     transform: rotatex(0deg) translatez(14px);
+}
+ .roll__three-d-box--back {
+     transform: rotatex(-90deg) translatez(14px);
+     background-color: #c0392b !important;
+}
+ .roll:hover ~ div {
+     transform: scale(0.7);
+}
+ .roll:hover ~ div > div {
+     animation-duration: 0.5s;
+}
+ .scene {
+     width: 200px;
+     height: 200px;
+     perspective: 600px;
+     transition: 1.5s;
+}
+ .scene:after {
+     width: 250px;
+     height: 30px;
+     background: #d01381;
+     border-radius: 50%;
+     filter: blur(40px);
+     position: relative;
+     top: 82px;
+     left: -20px;
+     z-index: 0;
+}
+ .scene input {
+     display: none;
+}
+ .scene input:checked + div {
+     animation-play-state: paused;
+     animation-duration: 0.5s;
+}
+
+
+ .scene .cube__face {
+     display: grid;
+     grid-template: repeat(3, 45px)/repeat(3, 45px);
+     border: 2px solid white;
+     background-image: radial-gradient(50% 50% at 50% 50%, antiquewhite, seashell);
+     position: absolute;
+     width: 200px;
+     height: 200px;
+     padding: 32.5px;
+     border-radius: 20px;
+}
+ .scene .cube__face--front i::after {
+     background: black;
+}
+ .scene .cube__face--back i::after {
+     background: black;
+}
+ .scene .cube__face--top i::after {
+     background: black;
+}
+ .scene .cube__face--bottom i::after {
+     background: black;
+}
+ .scene .cube__face--right i::after {
+     background: black;
+}
+ .scene .cube__face--left i::after {
+     background: black;
+}
+ .scene .cube__face--front {
+     transform: rotateY(0deg) translateZ(100px);
+}
+ .scene .cube__face--back {
+     transform: rotateY(90deg) translateZ(100px);
+}
+ .scene .cube__face--left {
+     transform: rotateY(180deg) translateZ(100px);
+}
+ .scene .cube__face--right {
+     transform: rotateY(-90deg) translateZ(100px);
+}
+ .scene .cube__face--top {
+     transform: rotateX(90deg) translateZ(100px);
+}
+ .scene .cube__face--bottom {
+     transform: rotateX(-90deg) translateZ(100px);
+}
+ .scene .cube__face i {
+     width: 100%;
+     height: 100%;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     flex-direction: row;
+     flex-wrap: nowrap;
+}
+ .scene .cube__face i:after {
+     width: 25px;
+     height: 25px;
+     border-radius: 50%;
+    
+}
+/*# sourceMappingURL=application.css.map */
+ @keyframes redlight {
+     from {
+    }
+     to {
+         color: black;
+    }
+}
