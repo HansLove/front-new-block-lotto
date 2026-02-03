@@ -1,6 +1,6 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Cpu, History, Zap } from 'lucide-react';
-
+import { Clock, TrendingUp, Zap } from 'lucide-react';
 import type { LottoTicket } from '@/services/lotto';
 
 interface TicketCardProps {
