@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, TrendingUp, Zap } from 'lucide-react';
+import { Cpu, History as HistoryIcon, Zap } from 'lucide-react';
 import type { LottoTicket } from '@/services/lotto';
 
 interface TicketCardProps {
@@ -94,7 +93,7 @@ export const TicketCard = ({
         </div>
         <div className="rounded-lg bg-gray-50 p-3">
           <div className="mb-0.5 flex items-center gap-1 text-[10px] uppercase tracking-wide text-gray-500">
-            <History className="h-2.5 w-2.5" />
+            <HistoryIcon className="h-2.5 w-2.5" />
             <span>Last attempt</span>
           </div>
           <div className="text-xs font-medium text-gray-900">{lastAttemptLabel}</div>

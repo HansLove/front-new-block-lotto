@@ -12,7 +12,6 @@ import {
   requestTicketHighEntropy,
   type SystemStats,
 } from '@/services/lotto';
-import { API_URL } from '@/utils/Rutes';
 
 interface LottoAttemptEvent {
   ticketId: string;
