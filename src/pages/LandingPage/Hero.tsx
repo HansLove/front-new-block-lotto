@@ -2,10 +2,10 @@ import { CubeTransparentIcon } from '@heroicons/react/24/outline';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { TicketCard } from '../../components/lotto/TicketCard';
 import LoginRequiredModal from '../../components/modals/LoginRequiredModal';
 import { useAuth } from '../../hooks/useLogInHook';
 import { useLotto } from '../../hooks/useLotto';
-import { TicketCard } from '../../components/lotto/TicketCard';
 
 const Hero: React.FC = () => {
   const { isSessionActive } = useAuth();
@@ -109,7 +109,6 @@ const Hero: React.FC = () => {
                     key={ticket.id}
                     ticket={ticket}
                     onClick={() => navigate(`/lotto/${ticket.id}`)}
-                    difficulty={stats?.difficulty || '12.5 T'}
                   />
                 ))}
               </div>

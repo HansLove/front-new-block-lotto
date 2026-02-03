@@ -2,16 +2,17 @@ import { useEffect, useState, useCallback } from 'react';
 import io from 'socket.io-client';
 import { API_URL } from '@/utils/Rutes';
 import {
-  fetchUserTickets,
-  fetchSystemStats,
-  fetchTicketDetail,
-  fetchTicketAttempts,
-  requestTicketHighEntropy,
-  type LottoTicket,
-  type LottoAttempt,
-  type SystemStats,
   type EntropyCompleted,
+  fetchSystemStats,
+  fetchTicketAttempts,
+  fetchTicketDetail,
+  fetchUserTickets,
+  type LottoAttempt,
+  type LottoTicket,
+  requestTicketHighEntropy,
+  type SystemStats,
 } from '@/services/lotto';
+import { API_URL } from '@/utils/Rutes';
 
 interface LottoAttemptEvent {
   ticketId: string;
@@ -67,7 +68,7 @@ export const useLotto = (): UseLottoReturn => {
   const [highEntropyPending, setHighEntropyPending] = useState<Record<string, boolean>>({});
   const [highEntropyResults, setHighEntropyResults] = useState<Record<string, EntropyCompleted | null>>({});
 
-  // Initialize socket connection
+  // Initialize socket connection (server root; backend joins socket to user:${userId} when auth.token is valid)
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -75,9 +76,11 @@ export const useLotto = (): UseLottoReturn => {
       setLoading(false);
       return;
     }
+    const socketBase = API_URL.replace(/\/api\/?$/, '') || API_URL;
 
-    const socketInstance = io(API_URL, {
+    const socketInstance = io(socketBase, {
       transports: ['polling', 'websocket'],
+      auth: { token },
       query: { token },
     });
 

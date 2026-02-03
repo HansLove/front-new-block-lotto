@@ -20,7 +20,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  // Add other user properties as needed
+  role?: 'user' | 'admin';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,15 +49,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setUser(null);
     setIsSessionActive(false);
+    try {
+      localStorage.removeItem('token');
+    } catch {
+      // ignore
+    }
   };
 
   const verifyToken = async (tokenToVerify: string) => {
     try {
-      const response = await axios.post(`${API_URL}auth/verifyToken`, { token: tokenToVerify });
+      const response = await axios.get(`${API_URL}auth/me`, {
+        headers: { Authorization: `Bearer ${tokenToVerify}` },
+      });
       return { status: response.status, data: response.data };
     } catch (error: any) {
-      console.error('Error verifying token:', error);
-      return { status: error.response?.status || 500, data: null };
+      try {
+        const postRes = await axios.post(`${API_URL}auth/verifyToken`, { token: tokenToVerify });
+        return { status: postRes.status, data: postRes.data };
+      } catch {
+        return { status: error.response?.status || 500, data: null };
+      }
     }
   };
 
@@ -76,11 +87,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      setTimeout(() => {
-        setUser(data.decoded || null);
-        setIsSessionActive(true);
-        setIsLoading(false);
-      }, 500);
+      const userData = data.user ?? data.decoded;
+      setUser(userData ?? null);
+      setIsSessionActive(!!userData);
+      setIsLoading(false);
     };
 
     initializeAuth();

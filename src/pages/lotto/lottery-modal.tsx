@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+
 import { LotteryTicketCard } from "./lottery-ticket-card"
 import { Modal } from "./modal"
 

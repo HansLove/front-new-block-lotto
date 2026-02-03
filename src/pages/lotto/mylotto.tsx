@@ -1,6 +1,7 @@
 "use client";
-import { ModalMyOwn } from "./modalmyown";
 import "./styles.css";
+
+import { ModalMyOwn } from "./modalmyown";
 
 interface LotteryModalProps {
   isOpen: boolean;

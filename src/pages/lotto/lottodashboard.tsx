@@ -1,18 +1,16 @@
-import { useEffect, useState } from 'react';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { motion } from 'framer-motion';
 import { Activity, Info, Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import axios, { AxiosError } from 'axios';
-import { DepositModal } from '@taloon/nowpayments-components';
 
 import { TicketCard } from '@/components/lotto/TicketCard';
-import { useLotto } from '@/hooks/useLotto';
 import { useAuth } from '@/hooks/useLogInHook';
+import { useLotto } from '@/hooks/useLotto';
 import type { LottoTicket } from '@/services/lotto';
-import { API_URL } from '@/utils/Rutes';
+import { createTicket } from '@/services/lotto';
 
 export default function LottoDash() {
   const navigate = useNavigate();
@@ -24,10 +22,11 @@ export default function LottoDash() {
     requestHighEntropyAttempt,
     highEntropyPending,
   } = useLotto();
-  const { user, isSessionActive, openLoginModal } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isSessionActive, openLoginModal } = useAuth();
   const [btcAddress, setBtcAddress] = useState('');
+  const [validDays, setValidDays] = useState(30);
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -42,57 +41,25 @@ export default function LottoDash() {
     }
   }, [refreshTickets, isSessionActive]);
 
-  const handleBuyTicket = () => {
+  const handleCreateTicket = async () => {
     if (!btcAddress || btcAddress.trim().length < 26) {
-      alert('Please enter a valid Bitcoin address');
+      toast.error('Please enter a valid Bitcoin address (26+ characters)');
       return;
     }
-    setShowBuyModal(false);
-    openModal();
-  };
-
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-
-  // Custom onSubmit that includes lotto ticket metadata
-  const handleLottoSubmit = async (depositModalData: any) => {
-    const token = localStorage.getItem('token');
-
-    const payload = {
-      amount: 10, // Fixed $10 for lotto ticket
-      orderId: `lotto-ticket-${Date.now()}`,
-      email: user?.email.toLowerCase() || '',
-      cryptoCurrency: depositModalData.selectedCurrency,
-      description: `Block-Lotto Ticket for ${btcAddress}`,
-      currency: 'usd',
-      metadata: {
-        charge: 'lotto_ticket',
-        btcAddress: btcAddress,
-        btc_address: btcAddress, // Support both formats
-        validDays: 30,
-      },
-    };
-
-    const options = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-
-    const response = await axios.post(`${API_URL}api/v1/payment/nowpayments`, payload, options);
-    return response.data;
-  };
-
-  const handleDepositSuccess = async (response: any) => {
-    // Ticket will be created automatically via webhook when payment completes
-    // Just refresh the tickets list
-    setTimeout(() => {
-      refreshTickets();
-    }, 2000); // Wait a bit for webhook to process
-    return {
-      address: response.payment.address,
-      paymentId: response.payment.order_id,
-    };
+    setCreating(true);
+    try {
+      await createTicket({ btcAddress: btcAddress.trim(), validDays: validDays || 30 });
+      toast.success('Ticket created. You will participate every 10 minutes.');
+      setShowBuyModal(false);
+      setBtcAddress('');
+      setValidDays(30);
+      await refreshTickets();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Failed to create ticket';
+      toast.error(msg);
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handlePlusUltra = async (ticket: LottoTicket) => {
@@ -133,19 +100,6 @@ export default function LottoDash() {
 
   return (
     <div className="min-h-screen bg-white">
-      <DepositModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        shouldNotifyByEmail={false}
-        onSubmit={async form => await handleLottoSubmit(form)}
-        onSuccess={handleDepositSuccess}
-        onError={error => {
-          if (error instanceof AxiosError) {
-            return error.response?.data.error.message || 'Payment failed due to a network error.';
-          }
-        }}
-      />
-
       {/* Header */}
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -232,9 +186,10 @@ export default function LottoDash() {
               animate={{ opacity: 1, scale: 1 }}
               className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
             >
-              <h3 className="mb-4 text-xl font-bold text-gray-900">Buy Block-Lotto Ticket</h3>
+              <h3 className="mb-4 text-xl font-bold text-gray-900">Create Block-Lotto Ticket</h3>
               <p className="mb-4 text-sm text-gray-600">
-                Enter your Bitcoin address to receive rewards if you win. Tickets are $10 USD and valid for 30 days.
+                Enter your Bitcoin address to receive rewards if you win. Your ticket will participate automatically
+                every 10 minutes until it expires.
               </p>
               <input
                 type="text"
@@ -243,6 +198,17 @@ export default function LottoDash() {
                 placeholder="Enter Bitcoin address..."
                 className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-lotto-green-500 focus:outline-none focus:ring-2 focus:ring-lotto-green-500/20"
               />
+              <div className="mb-4">
+                <label className="mb-1 block text-sm font-medium text-gray-700">Valid for (days)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={validDays}
+                  onChange={e => setValidDays(Number(e.target.value) || 30)}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-lotto-green-500 focus:outline-none focus:ring-2 focus:ring-lotto-green-500/20"
+                />
+              </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowBuyModal(false)}
@@ -251,10 +217,11 @@ export default function LottoDash() {
                   Cancel
                 </button>
                 <button
-                  onClick={handleBuyTicket}
-                  className="flex-1 rounded-lg bg-lotto-green-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-lotto-green-600"
+                  onClick={handleCreateTicket}
+                  disabled={creating}
+                  className="flex-1 rounded-lg bg-lotto-green-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-lotto-green-600 disabled:opacity-50"
                 >
-                  Continue to Payment
+                  {creating ? 'Creating...' : 'Create Ticket'}
                 </button>
               </div>
             </motion.div>
@@ -304,7 +271,6 @@ export default function LottoDash() {
                   ticket={ticket}
                   onClick={() => navigate(`/lotto/${ticket.id}`)}
                   onPlusUltra={handlePlusUltra}
-                  difficulty="12.5 T"
                   isPlusUltraPending={highEntropyPending[ticket.ticketId] || false}
                 />
               ))}

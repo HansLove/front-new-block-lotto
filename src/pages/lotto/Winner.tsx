@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import confetti from "canvas-confetti";
+import { useEffect } from "react";
 
 interface WinnerProps {
     winnerName: string;

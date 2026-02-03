@@ -6,8 +6,8 @@ import type { LottoTicket } from '@/services/lotto';
 interface TicketCardProps {
   ticket: LottoTicket;
   onClick?: () => void;
+  // eslint-disable-next-line no-unused-vars -- callback param in type
   onPlusUltra?: (ticket: LottoTicket) => void;
-  difficulty?: string;
   isPlusUltraPending?: boolean;
 }
 
@@ -15,41 +15,20 @@ export const TicketCard = ({
   ticket,
   onClick,
   onPlusUltra,
-  difficulty = '12.5 T',
   isPlusUltraPending = false,
 }: TicketCardProps) => {
-  const [timeUntilNext, setTimeUntilNext] = useState<string>('--:--');
-  const [isMining, setIsMining] = useState(false);
+  const isMining = !ticket.lastAttemptAt;
 
-  useEffect(() => {
-    const updateCountdown = () => {
-      if (!ticket.lastAttemptAt) {
-        setTimeUntilNext('00:00');
-        setIsMining(true);
-        return;
-      }
-
-      const lastAttempt = new Date(ticket.lastAttemptAt);
-      const nextAttempt = new Date(lastAttempt.getTime() + ticket.frequencyMinutes * 60 * 1000);
-      const now = new Date();
-      const diff = nextAttempt.getTime() - now.getTime();
-
-      if (diff <= 0) {
-        setTimeUntilNext('00:00');
-        setIsMining(true);
-      } else {
-        setIsMining(false);
-        const minutes = Math.floor(diff / 60000);
-        const seconds = Math.floor((diff % 60000) / 1000);
-        setTimeUntilNext(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-      }
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
-  }, [ticket.lastAttemptAt, ticket.frequencyMinutes]);
+  // Last attempt: always show specific time.
+  const lastAttemptLabel = ticket.lastAttemptAt
+    ? new Date(ticket.lastAttemptAt).toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : 'Never';
 
   // Determine status and colors
   const status = isMining ? 'MINING' : 'ACTIVE';
@@ -59,6 +38,16 @@ export const TicketCard = ({
 
   // Extract lotto number from ticketId (assuming format like "Lotto #142" or similar)
   const lottoNumber = ticket.ticketId?.replace(/[^0-9]/g, '') || ticket.id?.slice(-3) || '---';
+
+  const totalAttemptsDisplay = ticket.nonceTotal ?? ticket.totalAttempts ?? 0;
+  const nowMs = Date.now();
+  const validUntilMs = ticket.validUntil ? new Date(ticket.validUntil).getTime() : 0;
+  const expiresInDays = validUntilMs > nowMs ? Math.max(0, Math.ceil((validUntilMs - nowMs) / (1000 * 60 * 60 * 24))) : 0;
+  const expiresLabel = expiresInDays > 0 ? `${expiresInDays} day${expiresInDays !== 1 ? 's' : ''} left` : 'Expired';
+
+  const truncatedBtc = ticket.btcAddress
+    ? `${ticket.btcAddress.slice(0, 6)}...${ticket.btcAddress.slice(-6)}`
+    : '';
 
   return (
     <motion.div
@@ -73,31 +62,42 @@ export const TicketCard = ({
       </div>
 
       {/* Ticket Header */}
-      <div className="mb-6">
+      <div className="mb-4">
         <h3 className="text-xl font-bold text-gray-900">Lotto #{lottoNumber}</h3>
+        {ticket.btcAddress && (
+          <p className="mt-1 truncate text-xs font-mono text-gray-500" title={ticket.btcAddress}>
+            {truncatedBtc}
+          </p>
+        )}
       </div>
 
-      {/* Total Attempts - Large Display */}
-      <div className="mb-6">
-        <div className="text-4xl font-bold text-gray-900">{ticket.totalAttempts.toLocaleString()}</div>
+      {/* Total Attempts (nonce_total) - Large Display */}
+      <div className="mb-4">
+        <div className="text-4xl font-bold text-gray-900">{totalAttemptsDisplay.toLocaleString()}</div>
         <div className="text-sm text-gray-500">Total Attempts</div>
+        <div className="mt-1 text-xs text-gray-400">{ticket.totalAttempts.toLocaleString()} blocks</div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Expiration */}
+      <div className="mb-4 text-xs text-gray-500">
+        <span className="font-medium text-gray-600">Expires:</span> {expiresLabel}
+      </div>
+
+      {/* Mining cycle (~10 min) + Last attempt */}
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-lg bg-gray-50 p-3">
-          <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
-            <Clock className="h-3 w-3" />
-            <span>Next Block</span>
+          <div className="mb-0.5 flex items-center gap-1 text-[10px] uppercase tracking-wide text-gray-500">
+            <Cpu className="h-2.5 w-2.5" />
+            <span>Mining cycle</span>
           </div>
-          <div className="text-lg font-semibold text-gray-900">{timeUntilNext}</div>
+          <div className="text-xs font-medium text-gray-600">~10 min per block</div>
         </div>
         <div className="rounded-lg bg-gray-50 p-3">
-          <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
-            <TrendingUp className="h-3 w-3" />
-            <span>Difficulty</span>
+          <div className="mb-0.5 flex items-center gap-1 text-[10px] uppercase tracking-wide text-gray-500">
+            <History className="h-2.5 w-2.5" />
+            <span>Last attempt</span>
           </div>
-          <div className="text-lg font-semibold text-gray-900">{difficulty}</div>
+          <div className="text-xs font-medium text-gray-900">{lastAttemptLabel}</div>
         </div>
       </div>
 
