@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
-import { ModalMyOwn } from "./modalmyown";
 import "./styles.css";
+
+import { useState } from "react";
+
+import { ModalMyOwn } from "./modalmyown";
 
 interface LotteryModalProps {
   isOpen: boolean;

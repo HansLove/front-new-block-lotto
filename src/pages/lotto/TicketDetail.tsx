@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, Clock, RefreshCw, Shield, Activity } from 'lucide-react';
+import { Activity,ArrowLeft, CheckCircle2, Clock, RefreshCw, Shield } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+
 import { useLotto } from '@/hooks/useLotto';
 import type { LottoAttempt } from '@/services/lotto';
 
@@ -43,6 +44,8 @@ export default function TicketDetail() {
     loadData();
   }, [ticketId, getTicketDetail, getTicketAttempts]);
 
+  const maxNextAttemptMs = (ticket?.frequencyMinutes ?? 10) * 60 * 1000;
+
   useEffect(() => {
     if (!ticket) return;
 
@@ -53,20 +56,18 @@ export default function TicketDetail() {
       }
 
       const lastAttempt = new Date(ticket.lastAttemptAt);
-      const nextAttempt = new Date(lastAttempt.getTime() + ticket.frequencyMinutes * 60 * 1000);
+      const nextAttempt = new Date(lastAttempt.getTime() + maxNextAttemptMs);
       const now = new Date();
-      const diff = nextAttempt.getTime() - now.getTime();
+      let diff = nextAttempt.getTime() - now.getTime();
 
       if (diff <= 0) {
         setNextAttemptTime('Now');
       } else {
-        const hours = Math.floor(diff / 3600000);
-        const minutes = Math.floor((diff % 3600000) / 60000);
+        if (diff > maxNextAttemptMs) diff = maxNextAttemptMs;
+        const minutes = Math.floor(diff / 60000);
         const seconds = Math.floor((diff % 60000) / 1000);
 
-        if (hours > 0) {
-          setNextAttemptTime(`${hours}h ${minutes}m`);
-        } else if (minutes > 0) {
+        if (minutes > 0) {
           setNextAttemptTime(`${minutes}m ${seconds}s`);
         } else {
           setNextAttemptTime(`${seconds}s`);
@@ -78,14 +79,13 @@ export default function TicketDetail() {
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
-  }, [ticket]);
+  }, [ticket, maxNextAttemptMs]);
 
   useEffect(() => {
-    // Calculate probability based on total attempts and blocks mined
     if (stats && ticket) {
-      const totalAttempts = stats.totalAttempts || 1;
       const blocksMined = stats.totalBlocksMined || 0;
-      const estimatedProbability = Math.round(totalAttempts / Math.max(blocksMined, 1));
+      const attempts = stats.totalAttempts || 1;
+      const estimatedProbability = Math.round(attempts / Math.max(blocksMined, 1));
       setProbability(`1 : ${estimatedProbability.toLocaleString()}`);
     }
   }, [stats, ticket]);
@@ -163,8 +163,13 @@ export default function TicketDetail() {
         >
           <p className="mb-2 text-xs uppercase text-gray-500">TICKET ID</p>
           <h3 className="mb-2 text-3xl font-bold text-gray-900">{ticket.ticketId}</h3>
+          {ticket.btcAddress && (
+            <p className="mb-2 break-all font-mono text-sm text-gray-600" title="Bitcoin address">
+              {ticket.btcAddress}
+            </p>
+          )}
           <div className="flex items-center gap-2 text-sm text-green-600">
-            <CheckCircle2 className="h-4 w-4" />
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>Cryptographically verified unique entry</span>
           </div>
           <button className="mt-4 flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white">
@@ -192,7 +197,14 @@ export default function TicketDetail() {
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-gray-500" />
               <span className="text-xl font-bold text-gray-900">
-                {Math.ceil((new Date(ticket.validUntil).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} Days
+                {(() => {
+                  const validUntilMs = new Date(ticket.validUntil).getTime();
+                  const nowMs = Date.now();
+                  if (validUntilMs <= nowMs) return 'Expired';
+                  const days = Math.floor((validUntilMs - nowMs) / (1000 * 60 * 60 * 24));
+                  const hours = Math.floor(((validUntilMs - nowMs) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  return days > 0 ? `${days} day${days !== 1 ? 's' : ''} ${hours}h` : `${hours} hours`;
+                })()}
               </span>
             </div>
           </div>
@@ -235,6 +247,16 @@ export default function TicketDetail() {
             <p className="mb-2 text-xs uppercase text-gray-400">NEXT ATTEMPT</p>
             <p className="text-4xl font-bold">{nextAttemptTime}</p>
           </div>
+          <div className="mb-4 flex gap-6">
+            <div>
+              <p className="text-xs uppercase text-gray-400">TOTAL ATTEMPTS</p>
+              <p className="text-lg font-semibold">{(ticket.nonceTotal ?? ticket.totalAttempts ?? 0).toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase text-gray-400">BLOCKS</p>
+              <p className="text-lg font-semibold">{(ticket.totalAttempts ?? 0).toLocaleString()}</p>
+            </div>
+          </div>
           <div className="flex items-center justify-end">
             <div className="text-right">
               <p className="text-xs uppercase text-gray-400">PROBABILITY</p>
@@ -264,7 +286,7 @@ export default function TicketDetail() {
           >
             <h3 className="mb-4 text-lg font-semibold text-white">Recent Attempts</h3>
             <div className="space-y-3">
-              {attempts.slice(0, 5).map((attempt, index) => (
+              {attempts.slice(0, 5).map((attempt) => (
                 <div key={attempt.id} className="rounded-lg bg-slate-800/50 p-4">
                   <div className="flex items-center justify-between">
                     <div>

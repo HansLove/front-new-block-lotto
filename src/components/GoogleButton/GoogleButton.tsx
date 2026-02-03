@@ -28,19 +28,18 @@ const GoogleButton: React.FC<GoogleButtonProps> = ({
 }) => {
   const handleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
-      const decoded = jwtDecode(credentialResponse?.credential as string) as any;
-      const payload: Record<string, any> = {
-        name: decoded.given_name,
-        email: decoded.email?.toLowerCase(),
-        exp: decoded.exp,
-      };
+      const credential = credentialResponse?.credential;
+      const decoded = credential ? (jwtDecode(credential) as Record<string, unknown>) : null;
+      const payload = credential
+        ? { credential }
+        : { name: decoded?.given_name, email: (decoded?.email as string)?.toLowerCase() };
 
       const response = await axios.post(`${API_URL}auth/register/google`, payload);
       const user = response.data.user || response.data;
       const token = response.data.access_token;
 
       if (onSuccess) {
-        onSuccess({ user, token, credentialResponse, decoded });
+        onSuccess({ user, token, credentialResponse, decoded: decoded ?? user });
       }
     } catch (err: any) {
       if (!onError) {

@@ -1,11 +1,13 @@
 import axios from 'axios';
+
 import { API_URL } from '@/utils/Rutes';
+
 import {
-  requestLowEntropy,
-  requestHighEntropy,
+  type EntropyCompleted,
   generateHexSeed,
   type LowEntropyResponse,
-  type EntropyCompleted,
+  requestHighEntropy,
+  requestLowEntropy,
 } from './entropy';
 
 export interface LottoTicket {
@@ -16,6 +18,9 @@ export interface LottoTicket {
   validUntil: string;
   frequencyMinutes: number;
   stars: number;
+  /** Total number of attempts (from API nonce_total). */
+  nonceTotal: number;
+  /** Number of blocks/rounds participated in. */
   totalAttempts: number;
   lastAttemptAt: string | null;
   createdAt: string;
@@ -59,19 +64,61 @@ const getAuthHeaders = () => {
   };
 };
 
+function mapInstanceToLottoTicket(row: Record<string, unknown>): LottoTicket {
+  return {
+    id: String(row.id),
+    ticketId: String(row.ticketId ?? row.id),
+    btcAddress: String(row.btcAddress ?? row.btc_address ?? ''),
+    status: (row.status as LottoTicket['status']) ?? 'active',
+    validUntil: row.validUntil != null ? String(row.validUntil) : '',
+    frequencyMinutes: Number(row.frequencyMinutes ?? 10),
+    stars: Number(row.stars ?? 3),
+    nonceTotal: Number(row.nonce_total ?? row.nonceTotal ?? 0),
+    totalAttempts: Number(row.totalAttempts ?? 0),
+    lastAttemptAt: row.lastAttemptAt != null ? String(row.lastAttemptAt) : null,
+    createdAt: String(row.created_at ?? row.createdAt ?? ''),
+    updatedAt: String(row.updated_at ?? row.updatedAt ?? ''),
+  };
+}
+
+function mapEventToLottoAttempt(row: Record<string, unknown>): LottoAttempt {
+  const energyType = row.energy_type as string | undefined;
+  return {
+    id: String(row.id),
+    blockHeight: Number(row.block_height ?? row.blockHeight ?? 0),
+    hash: String(row.tip_hash ?? row.hash ?? ''),
+    nonce: String(row.nonce ?? ''),
+    stars: energyType === 'HIGH' ? 5 : 3,
+    isBlock: false,
+    blockHash: null,
+    merkleRoot: null,
+    prevHash: null,
+    bits: null,
+    timestamp: null,
+    attemptedAt: String(row.created_at ?? row.attemptedAt ?? ''),
+  };
+}
+
 export const fetchUserTickets = async (): Promise<LottoTicket[]> => {
-  const response = await axios.get(`${API_URL}api/lotto/tickets`, getAuthHeaders());
-  return response.data.tickets || [];
+  const response = await axios.get(`${API_URL}instances`, getAuthHeaders());
+  const list = Array.isArray(response.data) ? response.data : [];
+  return list.map((row: Record<string, unknown>) => mapInstanceToLottoTicket(row));
 };
 
 export const createTicket = async (data: CreateTicketRequest): Promise<LottoTicket> => {
-  const response = await axios.post(`${API_URL}api/lotto/tickets`, data, getAuthHeaders());
-  return response.data.ticket;
+  const response = await axios.post(
+    `${API_URL}instances`,
+    { btc_address: data.btcAddress, valid_days: data.validDays ?? 30 },
+    getAuthHeaders()
+  );
+  return mapInstanceToLottoTicket(response.data);
 };
 
 export const fetchTicketDetail = async (ticketId: string): Promise<LottoTicket> => {
-  const response = await axios.get(`${API_URL}api/lotto/tickets/${ticketId}`, getAuthHeaders());
-  return response.data.ticket;
+  const tickets = await fetchUserTickets();
+  const found = tickets.find((t) => t.id === ticketId || t.ticketId === ticketId);
+  if (!found) throw new Error('Ticket not found');
+  return found;
 };
 
 export const fetchTicketAttempts = async (
@@ -79,16 +126,21 @@ export const fetchTicketAttempts = async (
   limit = 50,
   skip = 0
 ): Promise<{ attempts: LottoAttempt[]; pagination: { total: number; limit: number; skip: number; hasMore: boolean } }> => {
-  const response = await axios.get(`${API_URL}api/lotto/tickets/${ticketId}/attempts`, {
+  const response = await axios.get(`${API_URL}instances/${ticketId}/events`, {
     ...getAuthHeaders(),
     params: { limit, skip },
   });
-  return response.data;
+  const list = Array.isArray(response.data) ? response.data : [];
+  const attempts = list.map((row: Record<string, unknown>) => mapEventToLottoAttempt(row));
+  return {
+    attempts,
+    pagination: { total: attempts.length, limit, skip, hasMore: false },
+  };
 };
 
 export const fetchSystemStats = async (): Promise<{
   stats: SystemStats;
-  recentAttempts: Array<{
+  recentAttempts?: Array<{
     ticketId: string;
     blockHeight: number;
     hash: string;
@@ -97,8 +149,17 @@ export const fetchSystemStats = async (): Promise<{
     attemptedAt: string;
   }>;
 }> => {
-  const response = await axios.get(`${API_URL}api/lotto/stats`, getAuthHeaders());
-  return response.data;
+  const response = await axios.get(`${API_URL}status/stats`, getAuthHeaders());
+  const stats = response.data?.stats ?? response.data;
+  return {
+    stats: {
+      totalActiveTickets: Number(stats?.totalActiveTickets ?? 0),
+      totalAttempts: Number(stats?.totalAttempts ?? 0),
+      totalBlocksMined: Number(stats?.totalBlocksMined ?? 0),
+      lastBlockHeight: stats?.lastBlockHeight != null ? Number(stats.lastBlockHeight) : null,
+    },
+    recentAttempts: [],
+  };
 };
 
 /**
