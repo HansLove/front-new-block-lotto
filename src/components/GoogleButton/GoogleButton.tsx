@@ -31,7 +31,7 @@ const GoogleButton: React.FC<GoogleButtonProps> = ({
       const decoded = jwtDecode(credentialResponse?.credential as string) as any;
       const payload: Record<string, any> = {
         name: decoded.given_name,
-        email: decoded.email?.toUpperCase(),
+        email: decoded.email?.toLowerCase(),
         exp: decoded.exp,
       };
 
