@@ -10,8 +10,7 @@ import App from './App.tsx';
 import { AuthProvider } from './hooks/useLogInHook.tsx';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <GoogleOAuthProvider clientId="266147379640-8h0mgp0hritd5kvo72dnfq3ljb2to02i.apps.googleusercontent.com">
-    {/* // <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}> */}
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
     <AuthProvider>
       <NowPaymentsProvider apiKey="6HWSMB8-2KH4AFP-KFXNNSF-NNQP9FT">
         <App />
