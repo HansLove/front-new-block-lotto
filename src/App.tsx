@@ -12,7 +12,6 @@ import FAQ from './pages/Footer/FAQ';
 
 // Lazy load all route components
 const LandingPage = lazy(() => import('./pages/LandingPage/LandingPage'));
-const MiningPoolConnection = lazy(() => import('./components/miningPoolConnection'));
 const SignUp = lazy(() => import('./components/signup/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword/Request'));
 const ResetPassword = lazy(() => import('./pages/ForgotPassword/Reset'));
@@ -21,8 +20,6 @@ const NotFoundPage = lazy(() => import('./pages/404'));
 const TermsAndConditions = lazy(() => import('./pages/Footer/TermsAndConditions'));
 const PrivacyPolicy = lazy(() => import('./pages/Footer/PrivacyPolicy'));
 
-// Unified Games Hub component - central playground for all games
-const UnifiedGamesHub = lazy(() => import('./components/UnifiedGamesHub'));
 const ApiKeys = lazy(() => import('./pages/CaosAPI/ApiKeys'));
 const LottoDash = lazy(() => import('./pages/lotto/lottodashboard'));
 const TicketDetail = lazy(() => import('./pages/lotto/TicketDetail'));
@@ -80,10 +77,8 @@ function App() {
           <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
           <Route path="/TermsAndConditions" element={<TermsAndConditions />} />
           <Route path="/api-key" element={<ApiKeys />} />
-          {/* All app routes with shared Navbar (games, network, lotto) */}
+          {/* App routes with shared Navbar */}
           <Route element={<NavbarLayout />}>
-            <Route path="/games" element={<UnifiedGamesHub />} />
-            <Route path="/network" element={<MiningPoolConnection />} />
             <Route path="/lotto" element={<LottoDash />} />
             <Route path="/lotto/:ticketId" element={<TicketDetail />} />
           </Route>

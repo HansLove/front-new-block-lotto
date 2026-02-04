@@ -7,10 +7,8 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { Link, useNavigate } from 'react-router-dom';
 
 import GoogleButton from '@/components/GoogleButton';
-import Particles from '@/components/particles';
 import { useAuth } from '@/hooks/useLogInHook';
 import { API_URL } from '@/utils/Rutes';
-// import { jwtDecode } from "jwt-decode";
 
 interface FormData {
   name: string;
@@ -22,6 +20,12 @@ interface FormData {
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { setUser, setIsSessionActive } = useAuth();
+
+  const handleSignInLink = (e: React.MouseEvent) => {
+    e.preventDefault();
+    localStorage.setItem('shouldTriggerLogin', '1');
+    navigate('/');
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -119,31 +123,19 @@ const SignUp: React.FC = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12 dark:bg-slate-100">
-      <Particles className="pointer-events-none absolute inset-0" quantity={100} />
-
-      <div className="relative z-10 w-full max-w-md space-y-8">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+      <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <Link to="/" className="inline-block">
-            <img className="mx-auto h-16 w-auto dark:hidden" src="/images/logo.png" alt="Caos Engine" />
-            <img className="mx-auto hidden h-16 w-auto dark:block" src="/images/logo-light.png" alt="Caos Engine" />
+          <Link to="/" className="inline-flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lotto-blue-500 text-xl font-bold text-white">
+              B
+            </div>
+            <span className="text-xl font-bold text-gray-900">Block-Lotto</span>
           </Link>
-          <h2 className="mt-6 text-3xl font-bold text-white dark:text-gray-900">Create your account</h2>
-          <p className="mt-2 text-sm text-gray-400 dark:text-gray-600">
+          <h2 className="mt-6 text-2xl font-bold text-gray-900">Create your account</h2>
+          <p className="mt-2 text-sm text-gray-600">
             Or{' '}
-            <Link
-              to="/"
-              onClick={e => {
-                e.preventDefault();
-                navigate('/');
-                setTimeout(() => {
-                  // Trigger login modal after navigation
-                  const loginBtn = document.querySelector('[data-login-trigger]');
-                  if (loginBtn) (loginBtn as HTMLButtonElement).click();
-                }, 100);
-              }}
-              className="font-medium text-red-500 hover:text-red-400"
-            >
+            <Link to="/" onClick={handleSignInLink} className="font-medium text-lotto-green-600 hover:text-lotto-green-700">
               sign in to your existing account
             </Link>
           </p>
@@ -151,14 +143,16 @@ const SignUp: React.FC = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
           {error && (
-            <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
-              <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
           <div className="space-y-4">
             <div>
-              <h3 className="block text-sm font-medium text-gray-300 dark:text-gray-700">Full Name</h3>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Full Name
+              </label>
               <input
                 id="name"
                 type="text"
@@ -180,23 +174,24 @@ const SignUp: React.FC = () => {
                   onChange: clearError,
                 })}
                 className={clsx(
-                  'mt-1 block w-full rounded-lg border px-4 py-3 transition-colors focus:border-transparent focus:outline-none focus:ring-2',
-                  'bg-slate-800 text-white dark:bg-white dark:text-gray-900',
-                  errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-red-500'
+                  'mt-1 block w-full rounded-lg border bg-white px-4 py-3 text-gray-900 transition-colors focus:outline-none focus:ring-2',
+                  errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500/20'
                 )}
                 disabled={isLoading}
                 aria-invalid={!!errors.name}
                 aria-describedby={errors.name ? 'name-error' : undefined}
               />
               {errors.name && (
-                <p id="name-error" className="mt-2 text-sm text-red-500 dark:text-red-400">
+                <p id="name-error" className="mt-1 text-sm text-red-600">
                   {errors.name.message}
                 </p>
               )}
             </div>
 
             <div>
-              <h3 className="block text-sm font-medium text-gray-300 dark:text-gray-700">Email Address</h3>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email Address
+              </label>
               <input
                 id="email"
                 type="email"
@@ -214,16 +209,15 @@ const SignUp: React.FC = () => {
                   onChange: clearError,
                 })}
                 className={clsx(
-                  'mt-1 block w-full rounded-lg border px-4 py-3 transition-colors focus:border-transparent focus:outline-none focus:ring-2',
-                  'bg-slate-800 text-white dark:bg-white dark:text-gray-900',
-                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-red-500'
+                  'mt-1 block w-full rounded-lg border bg-white px-4 py-3 text-gray-900 transition-colors focus:outline-none focus:ring-2',
+                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500/20'
                 )}
                 disabled={isLoading}
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? 'email-error' : undefined}
               />
               {errors.email && (
-                <p id="email-error" className="mt-2 text-sm text-red-500 dark:text-red-400">
+                <p id="email-error" className="mt-1 text-sm text-red-600">
                   {errors.email.message}
                 </p>
               )}
@@ -231,7 +225,9 @@ const SignUp: React.FC = () => {
 
             <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
               <div>
-                <h3 className="block text-sm font-medium text-gray-300 dark:text-gray-700">Password</h3>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
                 <div className="relative">
                   <input
                     id="password"
@@ -257,9 +253,8 @@ const SignUp: React.FC = () => {
                       onChange: clearError,
                     })}
                     className={clsx(
-                      'mt-1 block w-full rounded-lg border px-4 py-3 transition-colors focus:border-transparent focus:outline-none focus:ring-2',
-                      'bg-slate-800 text-white dark:bg-white dark:text-gray-900',
-                      errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-red-500'
+                      'mt-1 block w-full rounded-lg border bg-white px-4 py-3 pr-10 text-gray-900 transition-colors focus:outline-none focus:ring-2',
+                      errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500/20'
                     )}
                     disabled={isLoading}
                     aria-invalid={!!errors.password}
@@ -268,22 +263,24 @@ const SignUp: React.FC = () => {
                   <button
                     type="button"
                     tabIndex={-1}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xl text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     onClick={() => setShowPassword(v => !v)}
-                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                    {showPassword ? <AiOutlineEyeInvisible className="h-5 w-5" /> : <AiOutlineEye className="h-5 w-5" />}
                   </button>
                 </div>
                 {errors.password && (
-                  <p id="password-error" className="mt-2 text-sm text-red-500 dark:text-red-400">
+                  <p id="password-error" className="mt-1 text-sm text-red-600">
                     {errors.password.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <h3 className="block text-sm font-medium text-gray-300 dark:text-gray-700">Confirm Password</h3>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                  Confirm Password
+                </label>
                 <div className="relative">
                   <input
                     id="confirmPassword"
@@ -295,11 +292,10 @@ const SignUp: React.FC = () => {
                       onChange: clearError,
                     })}
                     className={clsx(
-                      'bloc</svg>k mt-1 w-full rounded-lg border px-4 py-3 transition-colors focus:border-transparent focus:outline-none focus:ring-2',
-                      'bg-slate-800 text-white dark:bg-white dark:text-gray-900',
+                      'block mt-1 w-full rounded-lg border bg-white px-4 py-3 pr-10 text-gray-900 transition-colors focus:outline-none focus:ring-2',
                       errors.confirmPassword
                         ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-600 focus:ring-red-500'
+                        : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500/20'
                     )}
                     disabled={isLoading}
                     aria-invalid={!!errors.confirmPassword}
@@ -308,15 +304,15 @@ const SignUp: React.FC = () => {
                   <button
                     type="button"
                     tabIndex={-1}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xl text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     onClick={() => setShowConfirmPassword(v => !v)}
-                    aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showConfirmPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                    {showConfirmPassword ? <AiOutlineEyeInvisible className="h-5 w-5" /> : <AiOutlineEye className="h-5 w-5" />}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p id="confirmPassword-error" className="mt-2 text-sm text-red-500 dark:text-red-400">
+                  <p id="confirmPassword-error" className="mt-1 text-sm text-red-600">
                     {errors.confirmPassword.message}
                   </p>
                 )}
@@ -328,7 +324,7 @@ const SignUp: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex w-full transform justify-center rounded-lg border border-transparent bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:scale-[1.02] hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-lotto-green-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-lotto-green-600 focus:outline-none focus:ring-2 focus:ring-lotto-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? 'Creating account...' : 'Sign up'}
             </button>
@@ -336,12 +332,10 @@ const SignUp: React.FC = () => {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700 dark:border-gray-300" />
+              <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-slate-950 px-2 text-gray-400 dark:bg-slate-100 dark:text-gray-600">
-                Or continue with
-              </span>
+              <span className="bg-gray-50 px-2 text-gray-500">Or continue with</span>
             </div>
           </div>
 

@@ -66,8 +66,6 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
     }
   };
 
-  if (!open) return null;
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
@@ -84,9 +82,9 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
                 <span className="inline-block h-2 w-2 rounded-full bg-gradient-to-r from-orange-500 to-rose-500" />
-                Contact Caos Engine
+                Contact Block Lotto
               </div>
-              <h3 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">Request a consultation</h3>
+              <h3 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">Get in touch</h3>
             </div>
 
             <button

@@ -26,8 +26,8 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="fixed z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8" aria-label="Global">
+      <header className="fixed top-0 z-50 w-full border-b border-gray-200 bg-white/90 backdrop-blur-sm">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8" aria-label="Global">
           {/* Logo */}
           <div className="flex lg:flex-1">
             <Link to="/" className="-m-1.5 flex items-center gap-2 p-1.5">
