@@ -9,11 +9,7 @@ export const BaseLayout = ({ children, className = '' }: { children: React.React
     <div className={`min-h-screen ${className}`}>
       <Navbar />
       <LoginModal />
-      <main className="pt-20">
-        {' '}
-        {/* Add top padding to account for fixed navbar */}
-        {children}
-      </main>
+      <main className="pt-20">{children}</main>
     </div>
   );
 };

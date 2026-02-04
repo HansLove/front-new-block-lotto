@@ -1,5 +1,5 @@
 import { Dialog, Transition } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Fragment, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -7,8 +7,14 @@ import { useAuth } from '@/hooks/useLogInHook';
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { openLoginModal, isSessionActive } = useAuth();
+  const { openLoginModal, isSessionActive, logout } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    setMobileMenuOpen(false);
+    navigate('/');
+  };
 
   const handleNewLotto = () => {
     if (isSessionActive) {
@@ -44,19 +50,6 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* Desktop navigation */}
-          <div className="hidden lg:flex lg:items-center lg:gap-x-8">
-            <Link to="#how-it-works" className="text-sm font-medium text-gray-700 transition-colors hover:text-gray-900">
-              How it works
-            </Link>
-            <Link to="#transparency" className="text-sm font-medium text-gray-700 transition-colors hover:text-gray-900">
-              Transparency
-            </Link>
-            <Link to="#stats" className="text-sm font-medium text-gray-700 transition-colors hover:text-gray-900">
-              Stats
-            </Link>
-          </div>
-
           {/* CTA Buttons */}
           <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
             <button
@@ -66,11 +59,21 @@ const Navbar = () => {
               + New Lotto
             </button>
             <button
-              onClick={() => (isSessionActive ? null : openLoginModal())}
+              onClick={() => (isSessionActive ? navigate('/lotto') : openLoginModal())}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
             >
               {isSessionActive ? 'Dashboard' : 'Connect'}
             </button>
+            {isSessionActive && (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                aria-label="Log out"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                Log out
+              </button>
+            )}
           </div>
         </nav>
       </header>
@@ -114,29 +117,6 @@ const Navbar = () => {
 
                 <div className="mt-6 flow-root px-4">
                   <div className="-my-6 divide-y divide-gray-500/10">
-                    <div className="space-y-2 py-6">
-                      <Link
-                        to="#how-it-works"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                      >
-                        How it works
-                      </Link>
-                      <Link
-                        to="#transparency"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                      >
-                        Transparency
-                      </Link>
-                      <Link
-                        to="#stats"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                      >
-                        Stats
-                      </Link>
-                    </div>
                     <div className="py-6">
                       <button
                         onClick={() => {
@@ -150,12 +130,21 @@ const Navbar = () => {
                       <button
                         onClick={() => {
                           setMobileMenuOpen(false);
-                          if (!isSessionActive) openLoginModal();
+                          isSessionActive ? navigate('/lotto') : openLoginModal();
                         }}
                         className="mt-3 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
                       >
                         {isSessionActive ? 'Dashboard' : 'Connect'}
                       </button>
+                      {isSessionActive && (
+                        <button
+                          onClick={handleLogout}
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                        >
+                          <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                          Log out
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -100,42 +100,6 @@ export default function LottoDash() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lotto-blue-500 text-xl font-bold text-white">
-                B
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">Block-Lotto</h1>
-            </div>
-            <nav className="hidden gap-6 md:flex">
-              <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900">
-                How it works
-              </a>
-              <a href="#transparency" className="text-sm text-gray-600 hover:text-gray-900">
-                Transparency
-              </a>
-              <a href="#stats" className="text-sm text-gray-600 hover:text-gray-900">
-                Stats
-              </a>
-            </nav>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowBuyModal(true)}
-                className="rounded-lg bg-lotto-green-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-lotto-green-600"
-              >
-                + New Lotto
-              </button>
-              <button className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50">
-                Connect
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Status Bar */}
       <div className="border-b border-gray-200 bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
@@ -172,9 +136,6 @@ export default function LottoDash() {
             >
               Start Playing
             </button>
-            <a href="#transparency" className="text-gray-600 hover:text-gray-900">
-              View Contracts →
-            </a>
           </div>
         </motion.div>
 

@@ -45,7 +45,7 @@ export const RUTE_REQUEST_ENERGY = 'api/v1/mining/new';
 
 // Entropy endpoints
 export const RUTE_ENTROPY_LOW = 'api/v1/mining/energy';
-export const RUTE_ENTROPY_HIGH = 'api/v1/mining/energy/high';
+export const RUTE_ENTROPY_HIGH = 'v1/mining/energy/high';
 
 export const RUTE_REQUEST_NEW_GAME = 'game/new';
 

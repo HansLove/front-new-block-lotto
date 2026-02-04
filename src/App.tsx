@@ -80,15 +80,13 @@ function App() {
           <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
           <Route path="/TermsAndConditions" element={<TermsAndConditions />} />
           <Route path="/api-key" element={<ApiKeys />} />
-          {/* Main app routes - with navbar and proper spacing */}
+          {/* All app routes with shared Navbar (games, network, lotto) */}
           <Route element={<NavbarLayout />}>
             <Route path="/games" element={<UnifiedGamesHub />} />
             <Route path="/network" element={<MiningPoolConnection />} />
-            {/* <Route path="/simulation" element={<SimulationBallDemo />} /> */}
+            <Route path="/lotto" element={<LottoDash />} />
+            <Route path="/lotto/:ticketId" element={<TicketDetail />} />
           </Route>
-          {/* Lotto routes - full page */}
-          <Route path="/lotto" element={<LottoDash />} />
-          <Route path="/lotto/:ticketId" element={<TicketDetail />} />
 
           {/* 404 - Catch all unmatched routes */}
           <Route path="*" element={<NotFoundPage />} />
