@@ -29,11 +29,7 @@ export const TicketCard = ({
       })
     : 'Never';
 
-  // Determine status and colors
-  const status = isMining ? 'MINING' : 'ACTIVE';
   const borderColor = isMining ? 'border-t-lotto-orange-400' : 'border-t-lotto-teal-400';
-  const badgeBg = isMining ? 'bg-lotto-orange-100' : 'bg-lotto-blue-100';
-  const badgeText = isMining ? 'text-lotto-orange-700' : 'text-lotto-blue-700';
 
   // Extract lotto number from ticketId (assuming format like "Lotto #142" or similar)
   const lottoNumber = ticket.ticketId?.replace(/[^0-9]/g, '') || ticket.id?.slice(-3) || '---';
@@ -56,9 +52,9 @@ export const TicketCard = ({
       className={`relative cursor-pointer overflow-hidden rounded-xl border-t-4 ${borderColor} bg-white p-6 shadow-sm transition-all hover:shadow-md`}
     >
       {/* Status Badge */}
-      <div className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-semibold ${badgeBg} ${badgeText}`}>
+      {/* <div className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-semibold ${badgeBg} ${badgeText}`}>
         {status}
-      </div>
+      </div> */}
 
       {/* Ticket Header */}
       <div className="mb-4">
