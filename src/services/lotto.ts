@@ -2,17 +2,6 @@ import axios from 'axios';
 
 import { API_URL } from '@/utils/Rutes';
 
-import {
-  type EntropyCompleted,
-  generateHexSeed,
-  type LowEntropyResponse,
-  requestHighEntropy,
-  requestLowEntropy,
-} from './entropy';
-
-// Re-export types that are used by consumers
-export type { EntropyCompleted, LowEntropyResponse };
-
 export interface LottoTicket {
   id: string;
   ticketId: string;
@@ -53,7 +42,7 @@ export interface SystemStats {
   difficulty?: string;
 }
 
-export interface CreateTicketRequest {
+interface CreateTicketRequest {
   btcAddress: string;
   validDays?: number;
 }
@@ -166,32 +155,25 @@ export const fetchSystemStats = async (): Promise<{
   };
 };
 
-/**
- * Request high entropy for a lotto ticket (Plus Ultra feature)
- * @param ticket - The lotto ticket object
- * @param stars - Number of stars (default: 12)
- * @param seed - Optional hex seed (8 characters). If not provided, one will be generated
- * @returns Promise with entropy completion data
- */
-export const requestTicketHighEntropy = async (
-  ticket: LottoTicket,
-  stars: number = 12,
-  seed?: string
-): Promise<EntropyCompleted> => {
-  const hexSeed = seed || generateHexSeed();
-  return await requestHighEntropy(ticket.btcAddress, stars, hexSeed);
-};
+/** Response from POST /instances/:id/high (process high mode - Bitcoin mining energy) */
+export interface InstanceHighModeResponse {
+  message: string;
+}
 
 /**
- * Request low entropy for a lotto ticket (manual attempt)
- * @param ticket - The lotto ticket object
- * @param stars - Number of stars (default: 5)
- * @returns Promise with low entropy response
+ * Trigger high-entropy (Plus Ultra) for an instance. Backend obtains computational
+ * energy from Bitcoin mining and adds the result to total attempts.
+ * @param instanceId - Instance/ticket id (e.g. ticket.id)
+ * @returns Promise with API success message
  */
-export const requestTicketLowEntropy = async (
-  ticket: LottoTicket,
-  stars: number = 5
-): Promise<LowEntropyResponse> => {
-  return await requestLowEntropy(ticket.btcAddress, stars);
+export const requestInstanceHighMode = async (
+  instanceId: string
+): Promise<InstanceHighModeResponse> => {
+  const response = await axios.post<InstanceHighModeResponse>(
+    `${API_URL}instances/${instanceId}/high`,
+    {},
+    getAuthHeaders()
+  );
+  return response.data;
 };
 

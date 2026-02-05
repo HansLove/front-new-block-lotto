@@ -1,17 +1,19 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import io from 'socket.io-client';
-import { API_URL } from '@/utils/Rutes';
+
+import type { EntropyCompleted } from '@/services/entropy';
 import {
-  type EntropyCompleted,
   fetchSystemStats,
   fetchTicketAttempts,
   fetchTicketDetail,
   fetchUserTickets,
+  type InstanceHighModeResponse,
   type LottoAttempt,
   type LottoTicket,
-  requestTicketHighEntropy,
+  requestInstanceHighMode,
   type SystemStats,
 } from '@/services/lotto';
+import { API_URL } from '@/utils/Rutes';
 
 interface LottoAttemptEvent {
   ticketId: string;
@@ -42,6 +44,7 @@ interface BlockMinedEvent {
   btcAddress: string;
 }
 
+/* eslint-disable no-unused-vars -- interface method param names are for typing only */
 interface UseLottoReturn {
   tickets: LottoTicket[];
   stats: SystemStats | null;
@@ -52,10 +55,11 @@ interface UseLottoReturn {
   refreshTickets: () => Promise<void>;
   getTicketDetail: (ticketId: string) => Promise<LottoTicket | null>;
   getTicketAttempts: (ticketId: string, limit?: number, skip?: number) => Promise<{ attempts: LottoAttempt[]; pagination: any } | null>;
-  requestHighEntropyAttempt: (ticket: LottoTicket, stars?: number, seed?: string) => Promise<EntropyCompleted>;
+  requestHighEntropyAttempt: (ticket: LottoTicket) => Promise<InstanceHighModeResponse>;
   highEntropyPending: Record<string, boolean>;
   highEntropyResults: Record<string, EntropyCompleted | null>;
 }
+/* eslint-enable no-unused-vars */
 
 export const useLotto = (): UseLottoReturn => {
   const [tickets, setTickets] = useState<LottoTicket[]>([]);
@@ -200,21 +204,19 @@ export const useLotto = (): UseLottoReturn => {
   );
 
   /**
-   * Request high entropy for a ticket (Plus Ultra feature)
-   * @param ticket - The lotto ticket
-   * @param stars - Number of stars (default: 12)
-   * @param seed - Optional hex seed. If not provided, one will be generated
-   * @returns Promise that resolves when entropy is completed
+   * Request high entropy for a ticket (Plus Ultra). Calls backend to get computational
+   * energy from Bitcoin mining and add the result to total attempts.
+   * @param ticket - The lotto ticket (instance)
+   * @returns Promise with API response when the request is accepted
    */
   const requestHighEntropyAttempt = useCallback(
-    async (ticket: LottoTicket, stars: number = 12, seed?: string): Promise<EntropyCompleted> => {
+    async (ticket: LottoTicket): Promise<InstanceHighModeResponse> => {
       setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: true }));
       setHighEntropyResults(prev => ({ ...prev, [ticket.ticketId]: null }));
 
       try {
-        const result = await requestTicketHighEntropy(ticket, stars, seed);
+        const result = await requestInstanceHighMode(ticket.id);
         setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: false }));
-        setHighEntropyResults(prev => ({ ...prev, [ticket.ticketId]: result }));
         return result;
       } catch (err: any) {
         setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: false }));

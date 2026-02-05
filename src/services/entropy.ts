@@ -3,7 +3,7 @@ import io, { Socket } from 'socket.io-client';
 
 import { API_URL, RUTE_ENTROPY_HIGH, RUTE_ENTROPY_LOW } from '@/utils/Rutes';
 
-export interface LowEntropyResponse {
+interface LowEntropyResponse {
   requestId: string;
   energy: {
     nonce: number;
@@ -50,7 +50,7 @@ const getSocket = (): Socket => {
   return socket;
 };
 
-export const generateHexSeed = (): string => {
+const generateHexSeed = (): string => {
   const hexChars = '0123456789abcdef';
   let seed = '';
   for (let i = 0; i < 8; i++) {
@@ -59,12 +59,7 @@ export const generateHexSeed = (): string => {
   return seed;
 };
 
-export const isValidHexSeed = (seed: string): boolean => {
-  // Must be exactly 8 hex characters (Go's hex.DecodeString requires even length)
-  return /^[0-9a-fA-F]{8}$/.test(seed);
-};
-
-export const requestLowEntropy = async (address: string, stars: number): Promise<LowEntropyResponse> => {
+const requestLowEntropy = async (address: string, stars: number): Promise<LowEntropyResponse> => {
   const url = API_URL + RUTE_ENTROPY_LOW;
 
   const response = await axios.post<LowEntropyResponse>(
@@ -80,7 +75,7 @@ export const requestLowEntropy = async (address: string, stars: number): Promise
   return response.data;
 };
 
-export const requestHighEntropy = async (address: string, stars: number, seed: string): Promise<EntropyCompleted> => {
+const requestHighEntropy = async (address: string, stars: number, seed: string): Promise<EntropyCompleted> => {
   const url = API_URL + RUTE_ENTROPY_HIGH;
 
   // Ensure seed is clean: trimmed, lowercase, and only hex chars

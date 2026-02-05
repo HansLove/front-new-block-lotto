@@ -64,30 +64,25 @@ export default function LottoDash() {
 
   const handlePlusUltra = async (ticket: LottoTicket) => {
     try {
-      toast.info(`Initiating Plus Ultra for ticket ${ticket.ticketId}...`, {
+      toast.info('Requesting high entropy from Bitcoin mining...', {
         position: 'bottom-center',
         autoClose: 2000,
       });
 
-      const result = await requestHighEntropyAttempt(ticket, 12);
-      
-      toast.success(`Plus Ultra completed! ${result.leadingZeros} leading zeros.`, {
+      const result = await requestHighEntropyAttempt(ticket);
+
+      toast.success(result.message || 'Plus Ultra initiated. Total attempts will update when the round completes.', {
         position: 'bottom-center',
         autoClose: 3000,
       });
 
-      // Refresh tickets to get updated attempt count
       await refreshTickets();
     } catch (error: any) {
       console.error('Plus Ultra error:', error);
+      const msg = error.response?.data?.message || error.message;
       toast.error(
-        error.message === 'Request timed out'
-          ? 'Plus Ultra request timed out. Please try again.'
-          : 'Error initiating Plus Ultra. Please try again.',
-        {
-          position: 'bottom-center',
-          autoClose: 4000,
-        }
+        msg || 'Error initiating Plus Ultra. Please try again.',
+        { position: 'bottom-center', autoClose: 4000 }
       );
     }
   };
@@ -198,11 +193,7 @@ export default function LottoDash() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900">Active Lottos</h3>
             </div>
-            {stats && (
-              <div className="text-sm text-gray-500">
-                Network Hashrate: 452 EH/s
-              </div>
-            )}
+            
           </div>
 
           {loading ? (
