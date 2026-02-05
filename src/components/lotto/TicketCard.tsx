@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Cpu, History as HistoryIcon, Zap } from 'lucide-react';
+
 import type { LottoTicket } from '@/services/lotto';
 
 interface TicketCardProps {

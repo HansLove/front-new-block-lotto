@@ -6,11 +6,45 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 
-import { TicketCard } from '@/components/lotto/TicketCard';
+import { LottoOrbCard, type LottoOrbCardStatus } from '@/components/lotto/LottoOrbCard';
 import { useAuth } from '@/hooks/useLogInHook';
 import { useLotto } from '@/hooks/useLotto';
 import type { LottoTicket } from '@/services/lotto';
 import { createTicket } from '@/services/lotto';
+
+const CYCLE_SEC = 10 * 60; // 10 min
+
+function ticketToOrbProps(ticket: LottoTicket, isPlusUltraPending: boolean) {
+  const attemptsTotal = ticket.nonceTotal ?? ticket.totalAttempts ?? 0;
+  const lastAttemptMs = ticket.lastAttemptAt
+    ? new Date(ticket.lastAttemptAt).getTime()
+    : null;
+  const nextAttemptMs = lastAttemptMs != null ? lastAttemptMs + CYCLE_SEC * 1000 : null;
+  const nextAttemptInSec =
+    nextAttemptMs != null
+      ? Math.max(0, Math.round((nextAttemptMs - Date.now()) / 1000))
+      : CYCLE_SEC;
+
+  const isMining = !ticket.lastAttemptAt;
+  const status: LottoOrbCardStatus =
+    isMining ? 'MINING' : ticket.status === 'active' ? 'ACTIVE' : ticket.status === 'suspended' ? 'PAUSED' : 'EXPIRED';
+  const lottoNumber = ticket.ticketId?.replace(/[^0-9]/g, '') || ticket.id?.slice(-4);
+
+  return {
+    ticketId: ticket.id,
+    lottoNumber,
+    btcAddress: ticket.btcAddress ?? '',
+    status,
+    attemptsTotal,
+    nextAttemptInSec,
+    lastAttemptAt: ticket.lastAttemptAt ?? undefined,
+    expiresAt: ticket.validUntil,
+    isMining,
+    isPlusUltra: isPlusUltraPending,
+    stars: ticket.stars ?? 5,
+    isPlusUltraPending,
+  };
+}
 
 export default function LottoDash() {
   const navigate = useNavigate();
@@ -217,15 +251,18 @@ export default function LottoDash() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {activeTickets.map(ticket => (
-                <TicketCard
-                  key={ticket.id}
-                  ticket={ticket}
-                  onClick={() => navigate(`/lotto/${ticket.id}`)}
-                  onPlusUltra={handlePlusUltra}
-                  isPlusUltraPending={highEntropyPending[ticket.ticketId] || false}
-                />
-              ))}
+              {activeTickets.map(ticket => {
+                const pending = highEntropyPending[ticket.ticketId] ?? false;
+                const orbProps = ticketToOrbProps(ticket, pending);
+                return (
+                  <LottoOrbCard
+                    key={ticket.id}
+                    {...orbProps}
+                    onOpenDetails={(id) => navigate(`/lotto/${id}`)}
+                    onPlusUltra={() => handlePlusUltra(ticket)}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
