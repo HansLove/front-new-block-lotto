@@ -28,11 +28,9 @@ function ticketToOrbProps(ticket: LottoTicket, isPlusUltraPending: boolean) {
   const isMining = !ticket.lastAttemptAt;
   const status: LottoOrbCardStatus =
     isMining ? 'MINING' : ticket.status === 'active' ? 'ACTIVE' : ticket.status === 'suspended' ? 'PAUSED' : 'EXPIRED';
-  const lottoNumber = ticket.ticketId?.replace(/[^0-9]/g, '') || ticket.id?.slice(-4);
 
   return {
     ticketId: ticket.id,
-    lottoNumber,
     btcAddress: ticket.btcAddress ?? '',
     status,
     attemptsTotal,

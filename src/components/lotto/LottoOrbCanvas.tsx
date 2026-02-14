@@ -24,7 +24,11 @@ export function LottoOrbCanvas({
   const [useFallback, setUseFallback] = useState(false);
 
   const paramsRef = useRef(params);
+  const isMiningRef = useRef(isMining);
+  const isPlusUltraRef = useRef(isPlusUltra);
   paramsRef.current = params;
+  isMiningRef.current = isMining;
+  isPlusUltraRef.current = isPlusUltra;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -62,9 +66,9 @@ export function LottoOrbCanvas({
       const coreMat = new THREE.MeshStandardMaterial({
         color: 0x0d9488,
         emissive: 0x0d9488,
-        emissiveIntensity: 0.2,
+        emissiveIntensity: 0.35,
         metalness: 0.1,
-        roughness: 0.6,
+        roughness: 0.5,
       });
       meshCore = new THREE.Mesh(coreGeom, coreMat);
       scene.add(meshCore);
@@ -73,7 +77,7 @@ export function LottoOrbCanvas({
       const rimMat = new THREE.MeshBasicMaterial({
         color: 0x2dd4bf,
         transparent: true,
-        opacity: 0.25,
+        opacity: 0.4,
         side: THREE.BackSide,
       });
       meshRim = new THREE.Mesh(rimGeom, rimMat);
@@ -114,31 +118,36 @@ export function LottoOrbCanvas({
       if (!visible) return;
 
       const p = paramsRef.current;
+      const mining = isMiningRef.current;
+      const plusUltra = isPlusUltraRef.current;
       const t = (Date.now() - startTime) / 1000;
-      const pulse = 0.5 + 0.5 * Math.sin(t * p.pulseSpeed);
+      const pulse = 0.5 + 0.5 * Math.sin(t * (p.pulseSpeed * 1.2));
       const intensity = p.intensity;
-      const emissiveIntensity = 0.15 + intensity * 0.4 + (isMining ? pulse * 0.15 : 0) + (isPlusUltra ? pulse * 0.25 : 0);
-      (meshCore.material as THREE.MeshStandardMaterial).emissiveIntensity = emissiveIntensity;
+      const baseEmissive = 0.35 + intensity * 0.35;
+      const pulseEmissive = 0.2 * pulse + (mining ? pulse * 0.2 : 0) + (plusUltra ? pulse * 0.35 : 0);
+      (meshCore.material as THREE.MeshStandardMaterial).emissiveIntensity = Math.min(1, baseEmissive + pulseEmissive);
 
-      const rimOpacity = 0.2 + intensity * 0.2 + (isPlusUltra ? pulse * 0.2 : 0);
-      (meshRim.material as THREE.MeshBasicMaterial).opacity = Math.min(0.5, rimOpacity);
+      const rimOpacity = 0.35 + intensity * 0.2 + 0.25 * pulse + (plusUltra ? pulse * 0.2 : 0);
+      (meshRim.material as THREE.MeshBasicMaterial).opacity = Math.min(0.7, rimOpacity);
 
       const shellsToShow = p.shells;
       meshShells.forEach((m, i) => {
         m.visible = i < shellsToShow;
-        (m.material as THREE.MeshBasicMaterial).opacity = 0.06 + intensity * 0.06;
+        const shellPulse = 0.5 + 0.5 * Math.sin(t * 0.8 + i * 0.5);
+        (m.material as THREE.MeshBasicMaterial).opacity = 0.08 + intensity * 0.08 + shellPulse * 0.06;
       });
 
       if (meshHalo) {
-        meshHalo.visible = isPlusUltra;
-        (meshHalo.material as THREE.MeshBasicMaterial).opacity = 0.5 + pulse * 0.3;
-        meshHalo.rotation.z += 0.02;
+        meshHalo.visible = plusUltra;
+        (meshHalo.material as THREE.MeshBasicMaterial).opacity = 0.5 + pulse * 0.4;
+        meshHalo.rotation.z += 0.03;
       }
 
-      const wobble = p.noise * Math.sin(t * 0.7);
+      const wobble = p.noise * Math.sin(t * 1.2);
       meshCore.scale.setScalar(1 + wobble);
       meshRim.scale.setScalar(1 + wobble);
-      meshCore.rotation.y += 0.004 * (isPlusUltra ? 2 : 1);
+      const rotSpeed = plusUltra ? 0.022 : mining ? 0.014 : 0.01;
+      meshCore.rotation.y += rotSpeed;
       meshRim.rotation.y = meshCore.rotation.y;
 
       renderer.render(scene, camera);
@@ -173,7 +182,13 @@ export function LottoOrbCanvas({
         className="flex items-center justify-center"
         style={{ width: size, height: size }}
       >
-        <svg width={size} height={size} viewBox="-1 -1 2 2" className="overflow-visible">
+        <svg
+          width={size}
+          height={size}
+          viewBox="-1 -1 2 2"
+          className="overflow-visible animate-pulse"
+          style={{ animationDuration: '2.5s' }}
+        >
           {[1, 2, 3, 4, 5].slice(0, params.shells).map((_, i) => {
             const r = 0.4 + (i + 1) * 0.12;
             const opacity = 0.08 + params.intensity * 0.08;

@@ -46,7 +46,6 @@ function formatExpires(expiresAt: string | number | Date): string {
 
 export function LottoOrbCard({
   ticketId,
-  lottoNumber,
   btcAddress,
   status,
   attemptsTotal,
@@ -63,8 +62,23 @@ export function LottoOrbCard({
   isPlusUltraPending = false,
 }: LottoOrbCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const prevAttemptsRef = useRef(attemptsTotal);
   const [visible, setVisible] = useState(true);
   const [countdown, setCountdown] = useState(nextAttemptInSec);
+  const [recentDelta, setRecentDelta] = useState(0);
+
+  useEffect(() => {
+    if (attemptsTotal > prevAttemptsRef.current) {
+      setRecentDelta(attemptsTotal - prevAttemptsRef.current);
+      prevAttemptsRef.current = attemptsTotal;
+    }
+  }, [attemptsTotal]);
+
+  useEffect(() => {
+    if (recentDelta <= 0) return;
+    const t = setTimeout(() => setRecentDelta(0), 5000);
+    return () => clearTimeout(t);
+  }, [recentDelta]);
 
   const orbParams = useMemo(
     () => getOrbParams(attemptsTotal, isPlusUltra),
@@ -104,7 +118,6 @@ export function LottoOrbCard({
   const truncatedAddress = btcAddress
     ? `${btcAddress.slice(0, 6)}...${btcAddress.slice(-6)}`
     : '';
-  const displayNumber = lottoNumber ?? ticketId.slice(-4);
   const expiresLabel = formatExpires(expiresAt);
   const lastAttemptLabel = lastAttemptAt
     ? new Date(lastAttemptAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
@@ -132,7 +145,7 @@ export function LottoOrbCard({
     >
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Lotto #{displayNumber}</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Lotto</h3>
         <span
           className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusPillClass}`}
         >
@@ -163,10 +176,15 @@ export function LottoOrbCard({
       {/* Main row: attempts + orb */}
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="text-2xl font-bold tabular-nums text-gray-900">
-            {formatCompact(attemptsTotal)}
-          </div>
           <div className="text-xs text-gray-500">Total Attempts</div>
+          <div className="mt-0.5 max-h-14 overflow-y-auto font-mono text-sm font-semibold tabular-nums leading-tight text-gray-900">
+            {formatExact(attemptsTotal)}
+          </div>
+          {recentDelta > 0 && (
+            <div className="mt-0.5 text-xs font-medium tabular-nums text-lotto-green-600">
+              +{formatExact(recentDelta)}
+            </div>
+          )}
           <div className="mt-0.5 text-xs text-gray-400">
             {attemptsToday != null && attemptsToday > 0
               ? `+${formatCompact(attemptsToday)} today`
