@@ -161,7 +161,7 @@ export default function LottoDash() {
               onClick={() => setShowBuyModal(true)}
               className="rounded-lg bg-lotto-green-500 px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-lotto-green-600"
             >
-              Start Playing
+              New Lotto ⚡
             </button>
           </div>
         </motion.div>

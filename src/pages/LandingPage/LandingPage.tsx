@@ -5,6 +5,8 @@ import Navbar from '@/components/Navbar/Navbar';
 import { useAuth } from '@/hooks/useLogInHook';
 
 import Hero from './Hero';
+import { LiveStatsBar } from './LiveStatsBar';
+import { SpoonSection } from './SpoonSection';
 
 function LandingPage() {
   const { openLoginModal } = useAuth();
@@ -23,6 +25,8 @@ function LandingPage() {
       <Navbar />
       <div className="min-h-screen bg-white pt-16">
         <Hero />
+        <LiveStatsBar />
+        <SpoonSection />
         <LoginModal />
       </div>
     </>
