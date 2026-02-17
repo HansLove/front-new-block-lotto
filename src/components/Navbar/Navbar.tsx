@@ -17,24 +17,24 @@ const Navbar = () => {
   };
 
   const handleNewLotto = () => {
-    if (isSessionActive) {
-      navigate('/lotto');
-    } else {
-      openLoginModal();
-    }
+    if (isSessionActive) navigate('/lotto');
+    else openLoginModal();
   };
 
   return (
     <>
-      <header className="fixed top-0 z-50 w-full border-b border-gray-200 bg-white/90 backdrop-blur-sm">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8" aria-label="Global">
+      <header className="fixed top-0 z-50 w-full border-b border-white/[0.07] bg-[#07070a]/90 backdrop-blur-sm">
+        <nav
+          className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8"
+          aria-label="Global"
+        >
           {/* Logo */}
           <div className="flex lg:flex-1">
-            <Link to="/" className="-m-1.5 flex items-center gap-2 p-1.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lotto-blue-500 text-xl font-bold text-white">
+            <Link to="/" className="-m-1.5 flex items-center gap-2.5 p-1.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-lotto-blue-500 text-lg font-bold text-white">
                 B
               </div>
-              <span className="text-xl font-bold text-gray-900">Block-Lotto</span>
+              <span className="text-lg font-semibold text-white">Block-Lotto</span>
             </Link>
           </div>
 
@@ -42,7 +42,7 @@ const Navbar = () => {
           <div className="flex lg:hidden">
             <button
               type="button"
-              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
+              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white/50 hover:text-white/90"
               onClick={() => setMobileMenuOpen(true)}
             >
               <span className="sr-only">Open main menu</span>
@@ -50,27 +50,27 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
+          {/* Desktop CTAs */}
+          <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-3">
             <button
               onClick={handleNewLotto}
-              className="rounded-lg bg-lotto-green-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-lotto-green-600"
+              className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-amber-400"
             >
               + New Lotto
             </button>
             <button
               onClick={() => (isSessionActive ? navigate('/lotto') : openLoginModal())}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+              className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/70 transition-colors hover:border-white/30 hover:text-white"
             >
               {isSessionActive ? 'Dashboard' : 'Connect'}
             </button>
             {isSessionActive && (
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                className="flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/50 transition-colors hover:border-white/25 hover:text-white/80"
                 aria-label="Log out"
               >
-                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                <ArrowRightOnRectangleIcon className="h-4 w-4" />
                 Log out
               </button>
             )}
@@ -90,7 +90,7 @@ const Navbar = () => {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/50" />
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
           </Transition.Child>
 
           <div className="fixed inset-0 z-50 flex">
@@ -103,11 +103,11 @@ const Navbar = () => {
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <Dialog.Panel className="relative flex w-full max-w-xs flex-col overflow-y-auto bg-white pb-12 shadow-xl">
+              <Dialog.Panel className="relative flex w-full max-w-xs flex-col overflow-y-auto border-r border-white/[0.07] bg-[#0e0e14] pb-12 shadow-2xl">
                 <div className="flex px-4 pb-2 pt-5">
                   <button
                     type="button"
-                    className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
+                    className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white/50 hover:text-white/90"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <span className="sr-only">Close menu</span>
@@ -116,14 +116,14 @@ const Navbar = () => {
                 </div>
 
                 <div className="mt-6 flow-root px-4">
-                  <div className="-my-6 divide-y divide-gray-500/10">
-                    <div className="py-6">
+                  <div className="-my-6 divide-y divide-white/[0.07]">
+                    <div className="space-y-3 py-6">
                       <button
                         onClick={() => {
                           setMobileMenuOpen(false);
                           handleNewLotto();
                         }}
-                        className="w-full rounded-lg bg-lotto-green-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-lotto-green-600"
+                        className="w-full rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-amber-400"
                       >
                         + New Lotto
                       </button>
@@ -132,16 +132,16 @@ const Navbar = () => {
                           setMobileMenuOpen(false);
                           isSessionActive ? navigate('/lotto') : openLoginModal();
                         }}
-                        className="mt-3 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                        className="w-full rounded-lg border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/70 transition-colors hover:border-white/30 hover:text-white"
                       >
                         {isSessionActive ? 'Dashboard' : 'Connect'}
                       </button>
                       {isSessionActive && (
                         <button
                           onClick={handleLogout}
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                          className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/50 transition-colors hover:border-white/25 hover:text-white/80"
                         >
-                          <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                          <ArrowRightOnRectangleIcon className="h-4 w-4" />
                           Log out
                         </button>
                       )}
