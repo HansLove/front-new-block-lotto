@@ -58,97 +58,106 @@ function isLineFilled(lineIndex: number, status: PaymentLifecycleStatus): boolea
 }
 
 export function PaymentStatusPipeline({ status }: PaymentStatusPipelineProps) {
-  if (status === 'idle') return null;
+  const stageStates = STAGES.map((_, i) => ({
+    nodeState: resolveNodeState(i, status),
+    isConnectorFilled: isLineFilled(i, status),
+  }));
 
   return (
     <AnimatePresence>
-      <motion.div
-        key="pipeline"
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -6 }}
-        transition={{ duration: 0.25 }}
-        className="mb-5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-5 py-4"
-      >
-        {/* Node + connector row */}
-        <div className="mb-3 flex items-center">
-          {STAGES.map((stage, i) => {
-            const nodeState = resolveNodeState(i, status);
-            const isActive = nodeState === 'active';
-            const isDone = nodeState === 'done';
+      {status !== 'idle' && (
+        <motion.div
+          key="pipeline"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.25 }}
+          className="mb-5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-5 py-4"
+        >
+          {/* Node + connector row */}
+          <div className="mb-3 flex items-center">
+            {STAGES.map((stage, i) => {
+              const { nodeState, isConnectorFilled } = stageStates[i];
+              const isActive = nodeState === 'active';
+              const isDone = nodeState === 'done';
 
-            return (
-              <div key={stage.key} className="flex flex-1 items-center">
-                {/* Node */}
-                <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
-                  {isActive && (
-                    <>
+              return (
+                <div key={stage.key} className="flex flex-1 items-center">
+                  {/* Node */}
+                  <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
+                    {isActive && (
+                      <>
+                        <motion.div
+                          className="absolute h-5 w-5 rounded-full"
+                          style={{ backgroundColor: stage.activePulse }}
+                          animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0.15, 0.6] }}
+                          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                        />
+                        <motion.div
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: stage.activeDot }}
+                          animate={{ opacity: [1, 0.5, 1] }}
+                          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                        />
+                      </>
+                    )}
+                    {isDone && (
                       <motion.div
-                        className="absolute h-5 w-5 rounded-full"
-                        style={{ backgroundColor: stage.activePulse }}
-                        animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0.15, 0.6] }}
-                        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+                        className="h-2 w-2 rounded-full bg-lotto-green-500/60"
                       />
-                      <motion.div
-                        className="h-2 w-2 rounded-full"
-                        style={{ backgroundColor: stage.activeDot }}
-                        animate={{ opacity: [1, 0.5, 1] }}
-                        transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                      />
-                    </>
-                  )}
-                  {isDone && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 320, damping: 20 }}
-                      className="h-2 w-2 rounded-full bg-lotto-green-500/60"
-                    />
-                  )}
-                  {!isActive && !isDone && <div className="h-2 w-2 rounded-full border border-white/15" />}
-                </div>
-
-                {/* Connector */}
-                {i < STAGES.length - 1 && (
-                  <div className="mx-1.5 mt-px h-px flex-1 overflow-hidden bg-white/[0.08]">
-                    <motion.div
-                      className="h-full bg-lotto-green-500/35"
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: isLineFilled(i, status) ? 1 : 0 }}
-                      style={{ transformOrigin: 'left' }}
-                      transition={{ duration: 0.5, ease: 'easeOut' }}
-                    />
+                    )}
+                    {!isActive && !isDone && <div className="h-2 w-2 rounded-full border border-white/15" />}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
 
-        {/* Labels */}
-        <div className="mb-3 flex">
-          {STAGES.map((stage, i) => {
-            const nodeState = resolveNodeState(i, status);
-            return (
-              <div key={stage.key} className="flex flex-1">
-                <span
-                  className={`text-[9px] uppercase tracking-[0.14em] transition-colors duration-300 ${
-                    nodeState === 'active' ? 'text-white/65' : nodeState === 'done' ? 'text-white/30' : 'text-white/18'
-                  }`}
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                >
-                  {stage.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+                  {/* Connector */}
+                  {i < STAGES.length - 1 && (
+                    <div className="mx-1.5 mt-px h-px flex-1 overflow-hidden bg-white/[0.08]">
+                      <motion.div
+                        className="h-full bg-lotto-green-500/35"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: isConnectorFilled ? 1 : 0 }}
+                        style={{ transformOrigin: 'left' }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-        {/* Status message */}
-        <p className="text-[11px] text-white/40" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-          {STATUS_MESSAGES[status]}
-        </p>
-      </motion.div>
+          {/* Labels */}
+          <div className="mb-3 flex">
+            {STAGES.map((stage, i) => {
+              const { nodeState } = stageStates[i];
+              return (
+                <div key={stage.key} className="flex flex-1">
+                  <span
+                    className={`text-[9px] uppercase tracking-[0.14em] transition-colors duration-300 ${
+                      nodeState === 'active'
+                        ? 'text-white/65'
+                        : nodeState === 'done'
+                          ? 'text-white/30'
+                          : 'text-white/18'
+                    }`}
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    {stage.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Status message */}
+          <p className="text-[11px] text-white/40" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            {STATUS_MESSAGES[status]}
+          </p>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }

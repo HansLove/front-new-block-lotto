@@ -31,6 +31,7 @@ export function useLottoDeposit() {
       setPaymentData(response.payment);
       setIsPending(true);
     } catch (err: unknown) {
+      setOrderId(null);
       if (axios.isAxiosError(err)) {
         const serverMessage = err.response?.data?.message as string | undefined;
         setError(serverMessage ?? PAYMENT_CREATION_FAILURE_MESSAGE);

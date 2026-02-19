@@ -101,7 +101,8 @@ export default function LottoDash() {
     resetPayment,
   } = useLottoDeposit();
 
-  const prevTicketsLengthRef = useRef(tickets.length);
+  const prevTicketsLengthRef = useRef<number>(-1);
+  const confirmedRef = useRef(false);
 
   useEffect(() => {
     if (!isSessionActive && !loading) openLoginModal();
@@ -118,17 +119,25 @@ export default function LottoDash() {
   }, [lastPaymentEvent, orderId]);
 
   useEffect(() => {
-    if (!isPending) {
+    if (prevTicketsLengthRef.current === -1) {
       prevTicketsLengthRef.current = tickets.length;
       return;
     }
-    if (tickets.length > prevTicketsLengthRef.current) {
+    if (!isPending) {
+      confirmedRef.current = false;
+      prevTicketsLengthRef.current = tickets.length;
+      return;
+    }
+    if (tickets.length > prevTicketsLengthRef.current && !confirmedRef.current) {
+      confirmedRef.current = true;
       setPaymentStatus('confirmed');
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         toast.success('Your ticket is now active!', { position: 'bottom-center' });
         setPaymentStatus('idle');
         resetPayment();
       }, 1500);
+      prevTicketsLengthRef.current = tickets.length;
+      return () => clearTimeout(timerId);
     }
     prevTicketsLengthRef.current = tickets.length;
   }, [tickets, isPending, resetPayment]);
@@ -161,7 +170,8 @@ export default function LottoDash() {
       toast.info('Your payment is being detected. Your ticket will appear automatically.', {
         position: 'bottom-center',
       });
-    } else if (isPending) {
+    }
+    if (paymentStatus === 'idle' && isPending) {
       toast.info('Waiting for payment. Your ticket will appear automatically.', { position: 'bottom-center' });
     }
     setPaymentStatus('idle');
