@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import { getAuthHeaders } from '@/utils/apiClient';
 import { API_URL } from '@/utils/Rutes';
 
 export interface LottoTicket {
@@ -46,16 +47,6 @@ interface CreateTicketRequest {
   btcAddress: string;
   validDays?: number;
 }
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  };
-};
 
 function mapInstanceToLottoTicket(row: Record<string, unknown>): LottoTicket {
   return {

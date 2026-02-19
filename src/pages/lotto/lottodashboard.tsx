@@ -1,8 +1,10 @@
 import 'react-toastify/dist/ReactToastify.css';
 
+import { USDTNetwork } from '@taloon/nowpayments-components';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Activity, Clock, Info, Plus, Trophy, Zap } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Activity, Clock, Copy, Info, Loader2, Plus, Trophy, Zap } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import QRCode from 'react-qr-code';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 
@@ -10,10 +12,21 @@ import { formatExact } from '@/components/lotto/formatAttempts';
 import { LottoOrbCard, type LottoOrbCardStatus } from '@/components/lotto/LottoOrbCard';
 import { useAuth } from '@/hooks/useLogInHook';
 import { useLotto } from '@/hooks/useLotto';
+import { useLottoDeposit } from '@/hooks/useLottoDeposit';
 import type { LottoTicket } from '@/services/lotto';
-import { createTicket } from '@/services/lotto';
 
 const CYCLE_SEC = 10 * 60;
+
+const USDT_NETWORK_LABELS: Record<USDTNetwork, string> = {
+  [USDTNetwork.USDTMATIC]: 'USDT (Polygon)',
+  [USDTNetwork.USDTTRC20]: 'USDT (Tron)',
+  [USDTNetwork.USDTBSC]: 'USDT (BNB Chain)',
+  [USDTNetwork.USDTARB]: 'USDT (Arbitrum)',
+  [USDTNetwork.USDTSOL]: 'USDT (Solana)',
+  [USDTNetwork.USDTNEAR]: 'USDT (NEAR)',
+  [USDTNetwork.USDTOP]: 'USDT (Optimism)',
+  [USDTNetwork.USDTDOT]: 'USDT (Polkadot)',
+};
 
 function useLottoDisplayFonts() {
   useEffect(() => {
@@ -64,10 +77,14 @@ export default function LottoDash() {
   const navigate = useNavigate();
   const { tickets, stats, loading, refreshTickets, requestHighEntropyAttempt, highEntropyPending } = useLotto();
   const { isSessionActive, openLoginModal } = useAuth();
-  const [btcAddress, setBtcAddress] = useState('');
-  const [validDays, setValidDays] = useState(30);
   const [showBuyModal, setShowBuyModal] = useState(false);
-  const [creating, setCreating] = useState(false);
+
+  const {
+    btcAddress, selectedCurrency, paymentData, isPending, isSubmitting, error,
+    setBtcAddress, selectCurrency, submitPayment, resetPayment,
+  } = useLottoDeposit();
+
+  const prevTicketsLengthRef = useRef(tickets.length);
 
   useEffect(() => {
     if (!isSessionActive && !loading) openLoginModal();
@@ -77,24 +94,41 @@ export default function LottoDash() {
     if (isSessionActive) refreshTickets();
   }, [refreshTickets, isSessionActive]);
 
-  const handleCreateTicket = async () => {
-    if (!btcAddress || btcAddress.trim().length < 26) {
-      toast.error('Please enter a valid Bitcoin address (26+ characters)');
+  useEffect(() => {
+    if (!isPending) {
+      prevTicketsLengthRef.current = tickets.length;
       return;
     }
-    setCreating(true);
-    try {
-      await createTicket({ btcAddress: btcAddress.trim(), validDays: validDays || 30 });
-      toast.success('Ticket created. You will participate every 10 minutes.');
-      setShowBuyModal(false);
-      setBtcAddress('');
-      setValidDays(30);
-      await refreshTickets();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to create ticket');
-    } finally {
-      setCreating(false);
+    if (tickets.length > prevTicketsLengthRef.current) {
+      toast.success('Your ticket is now active!', { position: 'bottom-center' });
+      resetPayment();
     }
+    prevTicketsLengthRef.current = tickets.length;
+  }, [tickets, isPending, resetPayment]);
+
+  const handleSubmitPayment = () => {
+    const trimmed = btcAddress.trim();
+    const isValidAddress =
+      trimmed.length >= 26 &&
+      (trimmed.startsWith('bc1') || trimmed.startsWith('1') || trimmed.startsWith('3'));
+    if (!isValidAddress) {
+      toast.error('Invalid Bitcoin address');
+      return;
+    }
+    submitPayment();
+  };
+
+  const handleCopyAddress = () => {
+    if (!paymentData) return;
+    navigator.clipboard.writeText(paymentData.payAddress)
+      .then(() => toast.success('Address copied!'))
+      .catch(() => toast.error('Could not copy address'));
+  };
+
+  const handleCloseModal = () => {
+    if (isPending) toast.info('Waiting for payment. Your ticket will appear automatically.');
+    resetPayment();
+    setShowBuyModal(false);
   };
 
   const handlePlusUltra = async (ticket: LottoTicket) => {
@@ -117,7 +151,7 @@ export default function LottoDash() {
 
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif" }} className="min-h-screen bg-[#07070a] pt-16 text-white">
-      {/* ─── PAGE HEADER ─── */}
+      {/* ---- PAGE HEADER ---- */}
       <div className="border-b border-white/[0.05]">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
@@ -131,7 +165,7 @@ export default function LottoDash() {
                 <span className="text-xs text-white/35">Live</span>
                 {stats && (
                   <span className="text-xs text-white/20" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                    Block #{stats.lastBlockHeight?.toLocaleString() ?? '—'}
+                    Block #{stats.lastBlockHeight?.toLocaleString() ?? '--'}
                   </span>
                 )}
                 {stats && (
@@ -161,20 +195,20 @@ export default function LottoDash() {
         </div>
       </div>
 
-      {/* ─── STATS BAND ─── */}
+      {/* ---- STATS BAND ---- */}
       <div className="border-b border-white/[0.04]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 divide-x divide-white/[0.04] sm:grid-cols-4">
             {[
               {
                 label: 'Active Tickets',
-                value: stats?.totalActiveTickets?.toLocaleString() ?? '—',
+                value: stats?.totalActiveTickets?.toLocaleString() ?? '--',
                 icon: Activity,
                 mono: false,
               },
               {
                 label: 'Network Attempts',
-                value: stats ? formatExact(stats.totalAttempts) : '—',
+                value: stats ? formatExact(stats.totalAttempts) : '--',
                 icon: Zap,
                 mono: true,
               },
@@ -186,7 +220,7 @@ export default function LottoDash() {
               },
               {
                 label: 'Block Height',
-                value: stats?.lastBlockHeight?.toLocaleString() ?? '—',
+                value: stats?.lastBlockHeight?.toLocaleString() ?? '--',
                 icon: Clock,
                 mono: true,
               },
@@ -208,7 +242,7 @@ export default function LottoDash() {
         </div>
       </div>
 
-      {/* ─── MAIN CONTENT ─── */}
+      {/* ---- MAIN CONTENT ---- */}
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {loading && (
           <div className="flex items-center justify-center py-32">
@@ -267,7 +301,7 @@ export default function LottoDash() {
         )}
       </main>
 
-      {/* ─── FOOTER ─── */}
+      {/* ---- FOOTER ---- */}
       <footer className="border-t border-white/[0.04] py-10">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <Info className="mx-auto mb-3 h-3.5 w-3.5 text-white/10" />
@@ -278,7 +312,7 @@ export default function LottoDash() {
         </div>
       </footer>
 
-      {/* ─── BUY TICKET MODAL ─── */}
+      {/* ---- BUY TICKET MODAL ---- */}
       <AnimatePresence>
         {showBuyModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
@@ -289,54 +323,120 @@ export default function LottoDash() {
               transition={{ duration: 0.2 }}
               className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0e0e14] p-7 shadow-2xl"
             >
-              <h3
-                style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                className="mb-1.5 text-2xl font-semibold text-white"
-              >
-                Create a ticket
-              </h3>
-              <p className="mb-6 text-sm text-white/35">
-                Enter your Bitcoin address. Your ticket participates automatically every 10 minutes until it expires.
-              </p>
+              {paymentData === null ? (
+                <>
+                  <h3
+                    style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                    className="mb-1.5 text-2xl font-semibold text-white"
+                  >
+                    New Ticket
+                  </h3>
+                  <p className="mb-6 text-sm text-white/35">
+                    Enter your Bitcoin address and select the USDT network.
+                  </p>
 
-              <input
-                type="text"
-                value={btcAddress}
-                onChange={e => setBtcAddress(e.target.value)}
-                placeholder="Bitcoin address (bc1q...)"
-                className="mb-4 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
-              />
+                  <input
+                    type="text"
+                    value={btcAddress}
+                    onChange={e => setBtcAddress(e.target.value)}
+                    placeholder="Bitcoin address (bc1q...)"
+                    className="mb-4 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  />
 
-              <div className="mb-6">
-                <label className="mb-1.5 block text-xs text-white/35">Valid for (days)</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={365}
-                  value={validDays}
-                  onChange={e => setValidDays(Number(e.target.value) || 30)}
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition-colors focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
-                />
-              </div>
+                  <div className="mb-4">
+                    <label className="mb-1.5 block text-xs text-white/35">USDT Network</label>
+                    <select
+                      value={selectedCurrency}
+                      onChange={e => selectCurrency(e.target.value as USDTNetwork)}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition-colors focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
+                    >
+                      {Object.values(USDTNetwork).map(network => (
+                        <option key={network} value={network} className="bg-[#0e0e14] text-white">
+                          {USDT_NETWORK_LABELS[network]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowBuyModal(false)}
-                  className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/45 transition-colors hover:border-white/20 hover:text-white/70"
-                >
-                  Cancel
-                </button>
-                <motion.button
-                  onClick={handleCreateTicket}
-                  disabled={creating}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
-                  whileHover={{ scale: creating ? 1 : 1.02 }}
-                  whileTap={{ scale: creating ? 1 : 0.98 }}
-                >
-                  {creating ? 'Creating...' : 'Create Ticket'}
-                </motion.button>
-              </div>
+                  <div className="mb-6 rounded-lg bg-white/[0.03] px-4 py-2.5 text-center">
+                    <span className="text-sm font-medium text-white/60">6 USD - 3 months</span>
+                  </div>
+
+                  {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => { resetPayment(); setShowBuyModal(false); }}
+                      className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/45 transition-colors hover:border-white/20 hover:text-white/70"
+                    >
+                      Cancel
+                    </button>
+                    <motion.button
+                      onClick={handleSubmitPayment}
+                      disabled={isSubmitting}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
+                      whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                      whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                    >
+                      {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {isSubmitting ? 'Creating payment...' : 'Pay with USDT'}
+                    </motion.button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3
+                    style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                    className="mb-6 text-2xl font-semibold text-white"
+                  >
+                    Send Payment
+                  </h3>
+
+                  <div className="mb-5 flex justify-center rounded-xl bg-white p-4">
+                    <QRCode value={paymentData.payAddress} size={180} />
+                  </div>
+
+                  <div className="mb-4 text-center">
+                    <span className="text-xs uppercase tracking-wider text-white/35">
+                      {USDT_NETWORK_LABELS[paymentData.payCurrency as USDTNetwork] ?? paymentData.payCurrency}
+                    </span>
+                  </div>
+
+                  <div className="mb-4 rounded-lg bg-white/[0.03] px-4 py-3 text-center">
+                    <span className="text-sm text-white/50">Send exactly </span>
+                    <span className="text-base font-bold text-amber-400">{paymentData.payAmount}</span>
+                    <span className="text-sm text-white/50"> {paymentData.payCurrency}</span>
+                  </div>
+
+                  <div className="mb-4 flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3">
+                    <span
+                      className="min-w-0 flex-1 truncate text-xs text-white/60"
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    >
+                      {paymentData.payAddress}
+                    </span>
+                    <button
+                      onClick={handleCopyAddress}
+                      className="shrink-0 rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white/70"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <p className="mb-6 text-center text-xs leading-relaxed text-white/25">
+                    Send exactly this amount to the address above. Your ticket will appear automatically once the
+                    payment is confirmed.
+                  </p>
+
+                  <button
+                    onClick={handleCloseModal}
+                    className="w-full rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/45 transition-colors hover:border-white/20 hover:text-white/70"
+                  >
+                    Close
+                  </button>
+                </>
+              )}
             </motion.div>
           </div>
         )}

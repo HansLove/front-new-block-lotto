@@ -128,6 +128,11 @@ export const useLotto = (): UseLottoReturn => {
       );
     });
 
+    socketInstance.on('lotto:ticket_created', (_data: { instanceId: string; btcAddress: string }) => {
+      console.log('[useLotto] New ticket created:', _data);
+      loadTickets();
+    });
+
     // Handle entropy:completed events for high entropy requests
     socketInstance.on('entropy:completed', (data: EntropyCompleted) => {
       console.log('[useLotto] High entropy completed:', data);
