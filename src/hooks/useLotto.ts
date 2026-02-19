@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
 import type { EntropyCompleted } from '@/services/entropy';
@@ -49,6 +49,10 @@ interface PaymentLifecycleEvent {
   status: 'waiting' | 'confirming';
 }
 
+interface UseLottoOptions {
+  onPaymentLifecycle?: (event: PaymentLifecycleEvent) => void;
+}
+
 /* eslint-disable no-unused-vars -- interface method param names are for typing only */
 interface UseLottoReturn {
   tickets: LottoTicket[];
@@ -57,7 +61,6 @@ interface UseLottoReturn {
   isConnected: boolean;
   loading: boolean;
   error: string | null;
-  lastPaymentEvent: PaymentLifecycleEvent | null;
   refreshTickets: () => Promise<void>;
   getTicketDetail: (ticketId: string) => Promise<LottoTicket | null>;
   getTicketAttempts: (
@@ -71,14 +74,16 @@ interface UseLottoReturn {
 }
 /* eslint-enable no-unused-vars */
 
-export const useLotto = (): UseLottoReturn => {
+export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
+  const onPaymentLifecycleRef = useRef(options?.onPaymentLifecycle ?? null);
+  onPaymentLifecycleRef.current = options?.onPaymentLifecycle ?? null;
+
   const [tickets, setTickets] = useState<LottoTicket[]>([]);
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [socket, setSocket] = useState<ReturnType<typeof io> | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastPaymentEvent, setLastPaymentEvent] = useState<PaymentLifecycleEvent | null>(null);
   const [highEntropyPending, setHighEntropyPending] = useState<Record<string, boolean>>({});
   const [highEntropyResults, setHighEntropyResults] = useState<Record<string, EntropyCompleted | null>>({});
 
@@ -146,12 +151,12 @@ export const useLotto = (): UseLottoReturn => {
 
     socketInstance.on('lotto:payment_waiting', (data: { orderId: string }) => {
       console.log('[useLotto] Payment waiting:', data);
-      setLastPaymentEvent({ orderId: data.orderId, status: 'waiting' });
+      onPaymentLifecycleRef.current?.({ orderId: data.orderId, status: 'waiting' });
     });
 
     socketInstance.on('lotto:payment_confirming', (data: { orderId: string }) => {
       console.log('[useLotto] Payment confirming:', data);
-      setLastPaymentEvent({ orderId: data.orderId, status: 'confirming' });
+      onPaymentLifecycleRef.current?.({ orderId: data.orderId, status: 'confirming' });
     });
 
     // Handle entropy:completed events for high entropy requests
@@ -256,7 +261,6 @@ export const useLotto = (): UseLottoReturn => {
     isConnected,
     loading,
     error,
-    lastPaymentEvent,
     refreshTickets,
     getTicketDetail,
     getTicketAttempts,

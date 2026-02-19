@@ -3,7 +3,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { USDTNetwork } from '@taloon/nowpayments-components';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity, AlertTriangle, Clock, Copy, Info, Loader2, Plus, Trophy, Zap } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
@@ -80,8 +80,6 @@ export default function LottoDash() {
   useLottoDisplayFonts();
 
   const navigate = useNavigate();
-  const { tickets, stats, loading, refreshTickets, requestHighEntropyAttempt, highEntropyPending, lastPaymentEvent } =
-    useLotto();
   const { isSessionActive, openLoginModal } = useAuth();
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<PaymentLifecycleStatus>('idle');
@@ -101,6 +99,17 @@ export default function LottoDash() {
     resetPayment,
   } = useLottoDeposit();
 
+  // useLatest pattern: written during render so the callback below never closes over a stale orderId
+  const orderIdRef = useRef(orderId);
+  orderIdRef.current = orderId;
+
+  const { tickets, stats, loading, refreshTickets, requestHighEntropyAttempt, highEntropyPending } = useLotto({
+    onPaymentLifecycle: useCallback((event: { orderId: string; status: 'waiting' | 'confirming' }) => {
+      if (event.orderId !== orderIdRef.current) return;
+      setPaymentStatus(event.status);
+    }, []),
+  });
+
   const prevTicketsLengthRef = useRef<number>(-1);
   const confirmedRef = useRef(false);
 
@@ -111,12 +120,6 @@ export default function LottoDash() {
   useEffect(() => {
     if (isSessionActive) refreshTickets();
   }, [refreshTickets, isSessionActive]);
-
-  useEffect(() => {
-    if (!lastPaymentEvent || !orderId) return;
-    if (lastPaymentEvent.orderId !== orderId) return;
-    setPaymentStatus(lastPaymentEvent.status);
-  }, [lastPaymentEvent, orderId]);
 
   useEffect(() => {
     if (prevTicketsLengthRef.current === -1) {
