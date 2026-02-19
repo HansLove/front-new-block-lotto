@@ -2,7 +2,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { USDTNetwork } from '@taloon/nowpayments-components';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Activity, Clock, Copy, Info, Loader2, Plus, Trophy, Zap } from 'lucide-react';
+import { Activity, AlertTriangle, Clock, Copy, Info, Loader2, Plus, Trophy, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,11 @@ import { toast, ToastContainer } from 'react-toastify';
 
 import { formatExact } from '@/components/lotto/formatAttempts';
 import { LottoOrbCard, type LottoOrbCardStatus } from '@/components/lotto/LottoOrbCard';
+import {
+  type PaymentLifecycleStatus,
+  PaymentStatusPipeline,
+  PaymentWarningBanner,
+} from '@/components/lotto/PaymentStatusPipeline';
 import { useAuth } from '@/hooks/useLogInHook';
 import { useLotto } from '@/hooks/useLotto';
 import { useLottoDeposit } from '@/hooks/useLottoDeposit';
@@ -75,13 +80,25 @@ export default function LottoDash() {
   useLottoDisplayFonts();
 
   const navigate = useNavigate();
-  const { tickets, stats, loading, refreshTickets, requestHighEntropyAttempt, highEntropyPending } = useLotto();
+  const { tickets, stats, loading, refreshTickets, requestHighEntropyAttempt, highEntropyPending, lastPaymentEvent } =
+    useLotto();
   const { isSessionActive, openLoginModal } = useAuth();
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentLifecycleStatus>('idle');
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   const {
-    btcAddress, selectedCurrency, paymentData, isPending, isSubmitting, error,
-    setBtcAddress, selectCurrency, submitPayment, resetPayment,
+    btcAddress,
+    selectedCurrency,
+    paymentData,
+    orderId,
+    isPending,
+    isSubmitting,
+    error,
+    setBtcAddress,
+    selectCurrency,
+    submitPayment,
+    resetPayment,
   } = useLottoDeposit();
 
   const prevTicketsLengthRef = useRef(tickets.length);
@@ -95,13 +112,23 @@ export default function LottoDash() {
   }, [refreshTickets, isSessionActive]);
 
   useEffect(() => {
+    if (!lastPaymentEvent || !orderId) return;
+    if (lastPaymentEvent.orderId !== orderId) return;
+    setPaymentStatus(lastPaymentEvent.status);
+  }, [lastPaymentEvent, orderId]);
+
+  useEffect(() => {
     if (!isPending) {
       prevTicketsLengthRef.current = tickets.length;
       return;
     }
     if (tickets.length > prevTicketsLengthRef.current) {
-      toast.success('Your ticket is now active!', { position: 'bottom-center' });
-      resetPayment();
+      setPaymentStatus('confirmed');
+      setTimeout(() => {
+        toast.success('Your ticket is now active!', { position: 'bottom-center' });
+        setPaymentStatus('idle');
+        resetPayment();
+      }, 1500);
     }
     prevTicketsLengthRef.current = tickets.length;
   }, [tickets, isPending, resetPayment]);
@@ -109,8 +136,7 @@ export default function LottoDash() {
   const handleSubmitPayment = () => {
     const trimmed = btcAddress.trim();
     const isValidAddress =
-      trimmed.length >= 26 &&
-      (trimmed.startsWith('bc1') || trimmed.startsWith('1') || trimmed.startsWith('3'));
+      trimmed.length >= 26 && (trimmed.startsWith('bc1') || trimmed.startsWith('1') || trimmed.startsWith('3'));
     if (!isValidAddress) {
       toast.error('Invalid Bitcoin address');
       return;
@@ -120,13 +146,37 @@ export default function LottoDash() {
 
   const handleCopyAddress = () => {
     if (!paymentData) return;
-    navigator.clipboard.writeText(paymentData.payAddress)
+    navigator.clipboard
+      .writeText(paymentData.payAddress)
       .then(() => toast.success('Address copied!'))
       .catch(() => toast.error('Could not copy address'));
   };
 
   const handleCloseModal = () => {
-    if (isPending) toast.info('Waiting for payment. Your ticket will appear automatically.');
+    if (paymentStatus === 'confirming') {
+      setShowCloseConfirm(true);
+      return;
+    }
+    if (paymentStatus === 'waiting') {
+      toast.info('Your payment is being detected. Your ticket will appear automatically.', {
+        position: 'bottom-center',
+      });
+    } else if (isPending) {
+      toast.info('Waiting for payment. Your ticket will appear automatically.', { position: 'bottom-center' });
+    }
+    setPaymentStatus('idle');
+    setShowCloseConfirm(false);
+    resetPayment();
+    setShowBuyModal(false);
+  };
+
+  const handleForceClose = () => {
+    toast.info('Your payment is confirming. Your ticket will appear automatically once confirmed.', {
+      position: 'bottom-center',
+      autoClose: 5000,
+    });
+    setPaymentStatus('idle');
+    setShowCloseConfirm(false);
     resetPayment();
     setShowBuyModal(false);
   };
@@ -331,9 +381,7 @@ export default function LottoDash() {
                   >
                     New Ticket
                   </h3>
-                  <p className="mb-6 text-sm text-white/35">
-                    Enter your Bitcoin address and select the USDT network.
-                  </p>
+                  <p className="mb-6 text-sm text-white/35">Enter your Bitcoin address and select the USDT network.</p>
 
                   <input
                     type="text"
@@ -367,7 +415,10 @@ export default function LottoDash() {
 
                   <div className="flex gap-3">
                     <button
-                      onClick={() => { resetPayment(); setShowBuyModal(false); }}
+                      onClick={() => {
+                        resetPayment();
+                        setShowBuyModal(false);
+                      }}
                       className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/45 transition-colors hover:border-white/20 hover:text-white/70"
                     >
                       Cancel
@@ -388,10 +439,12 @@ export default function LottoDash() {
                 <>
                   <h3
                     style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                    className="mb-6 text-2xl font-semibold text-white"
+                    className="mb-4 text-2xl font-semibold text-white"
                   >
                     Send Payment
                   </h3>
+
+                  <PaymentStatusPipeline status={paymentStatus} />
 
                   <div className="mb-5 flex justify-center rounded-xl bg-white p-4">
                     <QRCode value={paymentData.payAddress} size={180} />
@@ -424,17 +477,57 @@ export default function LottoDash() {
                     </button>
                   </div>
 
-                  <p className="mb-6 text-center text-xs leading-relaxed text-white/25">
+                  <p className="mb-4 text-center text-xs leading-relaxed text-white/25">
                     Send exactly this amount to the address above. Your ticket will appear automatically once the
                     payment is confirmed.
                   </p>
 
-                  <button
-                    onClick={handleCloseModal}
-                    className="w-full rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/45 transition-colors hover:border-white/20 hover:text-white/70"
-                  >
-                    Close
-                  </button>
+                  <PaymentWarningBanner status={paymentStatus} />
+
+                  <AnimatePresence mode="wait">
+                    {showCloseConfirm ? (
+                      <motion.div
+                        key="close-confirm"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden rounded-xl border border-amber-500/25 bg-amber-500/[0.08] p-4"
+                      >
+                        <p className="mb-3 text-xs leading-relaxed text-amber-400/75">
+                          Your payment is confirming on-chain. Closing now won&apos;t cancel it — your ticket will still
+                          activate automatically.
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowCloseConfirm(false)}
+                            className="flex-1 rounded-lg border border-white/10 py-2.5 text-xs font-medium text-white/60 transition-colors hover:border-white/20 hover:text-white/80"
+                          >
+                            Stay
+                          </button>
+                          <button
+                            onClick={handleForceClose}
+                            className="flex-1 rounded-lg border border-amber-500/20 bg-amber-500/10 py-2.5 text-xs font-medium text-amber-400/70 transition-colors hover:bg-amber-500/15"
+                          >
+                            Close anyway
+                          </button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.button
+                        key="close-btn"
+                        onClick={handleCloseModal}
+                        className={`flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
+                          paymentStatus === 'confirming'
+                            ? 'border-amber-500/20 text-white/50 hover:border-amber-500/35 hover:text-white/70'
+                            : 'border-white/10 text-white/45 hover:border-white/20 hover:text-white/70'
+                        }`}
+                      >
+                        {paymentStatus === 'confirming' && <AlertTriangle className="h-3.5 w-3.5 text-amber-400/60" />}
+                        {paymentStatus === 'confirming' ? 'Close (confirming...)' : 'Close'}
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
                 </>
               )}
             </motion.div>

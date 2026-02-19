@@ -2,11 +2,7 @@ import { USDTNetwork } from '@taloon/nowpayments-components';
 import axios from 'axios';
 import { useCallback, useState } from 'react';
 
-import {
-  createPaymentIntent,
-  type LottoPaymentResult,
-  submitLottoPayment,
-} from '@/services/lottoPayment';
+import { createPaymentIntent, type LottoPaymentResult, submitLottoPayment } from '@/services/lottoPayment';
 
 const PAYMENT_CREATION_FAILURE_MESSAGE = 'Payment creation failed. Please try again.';
 
@@ -16,6 +12,7 @@ export function useLottoDeposit() {
   const [btcAddress, setBtcAddress] = useState('');
   const [selectedCurrency, setSelectedCurrency] = useState<USDTNetwork>(DEFAULT_CURRENCY);
   const [paymentData, setPaymentData] = useState<LottoPaymentResult | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,8 +24,9 @@ export function useLottoDeposit() {
     setError(null);
 
     try {
-      const { orderId } = await createPaymentIntent(btcAddress);
-      const response = await submitLottoPayment({ orderId, cryptoCurrency: selectedCurrency });
+      const { orderId: newOrderId } = await createPaymentIntent(btcAddress);
+      setOrderId(newOrderId);
+      const response = await submitLottoPayment({ orderId: newOrderId, cryptoCurrency: selectedCurrency });
 
       setPaymentData(response.payment);
       setIsPending(true);
@@ -50,6 +48,7 @@ export function useLottoDeposit() {
     setBtcAddress('');
     setSelectedCurrency(DEFAULT_CURRENCY);
     setPaymentData(null);
+    setOrderId(null);
     setIsPending(false);
     setIsSubmitting(false);
     setError(null);
@@ -59,6 +58,7 @@ export function useLottoDeposit() {
     btcAddress,
     selectedCurrency,
     paymentData,
+    orderId,
     isPending,
     isSubmitting,
     error,

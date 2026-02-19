@@ -44,6 +44,11 @@ interface BlockMinedEvent {
   btcAddress: string;
 }
 
+interface PaymentLifecycleEvent {
+  orderId: string;
+  status: 'waiting' | 'confirming';
+}
+
 /* eslint-disable no-unused-vars -- interface method param names are for typing only */
 interface UseLottoReturn {
   tickets: LottoTicket[];
@@ -52,9 +57,14 @@ interface UseLottoReturn {
   isConnected: boolean;
   loading: boolean;
   error: string | null;
+  lastPaymentEvent: PaymentLifecycleEvent | null;
   refreshTickets: () => Promise<void>;
   getTicketDetail: (ticketId: string) => Promise<LottoTicket | null>;
-  getTicketAttempts: (ticketId: string, limit?: number, skip?: number) => Promise<{ attempts: LottoAttempt[]; pagination: any } | null>;
+  getTicketAttempts: (
+    ticketId: string,
+    limit?: number,
+    skip?: number
+  ) => Promise<{ attempts: LottoAttempt[]; pagination: any } | null>;
   requestHighEntropyAttempt: (ticket: LottoTicket) => Promise<InstanceHighModeResponse>;
   highEntropyPending: Record<string, boolean>;
   highEntropyResults: Record<string, EntropyCompleted | null>;
@@ -68,6 +78,7 @@ export const useLotto = (): UseLottoReturn => {
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastPaymentEvent, setLastPaymentEvent] = useState<PaymentLifecycleEvent | null>(null);
   const [highEntropyPending, setHighEntropyPending] = useState<Record<string, boolean>>({});
   const [highEntropyResults, setHighEntropyResults] = useState<Record<string, EntropyCompleted | null>>({});
 
@@ -114,7 +125,7 @@ export const useLotto = (): UseLottoReturn => {
     });
 
     socketInstance.on('lotto:block_mined', (data: BlockMinedEvent) => {
-      console.log('[useLotto] 🎉 BLOCK MINED!', data);
+      console.log('[useLotto] BLOCK MINED!', data);
       // Update ticket and show notification
       setTickets(prev =>
         prev.map(ticket =>
@@ -133,10 +144,20 @@ export const useLotto = (): UseLottoReturn => {
       loadTickets();
     });
 
+    socketInstance.on('lotto:payment_waiting', (data: { orderId: string }) => {
+      console.log('[useLotto] Payment waiting:', data);
+      setLastPaymentEvent({ orderId: data.orderId, status: 'waiting' });
+    });
+
+    socketInstance.on('lotto:payment_confirming', (data: { orderId: string }) => {
+      console.log('[useLotto] Payment confirming:', data);
+      setLastPaymentEvent({ orderId: data.orderId, status: 'confirming' });
+    });
+
     // Handle entropy:completed events for high entropy requests
     socketInstance.on('entropy:completed', (data: EntropyCompleted) => {
       console.log('[useLotto] High entropy completed:', data);
-      
+
       // Find the ticket that matches this address
       setTickets(prev =>
         prev.map(ticket => {
@@ -144,7 +165,7 @@ export const useLotto = (): UseLottoReturn => {
             // Update ticket with new attempt
             setHighEntropyPending(prevPending => ({ ...prevPending, [ticket.ticketId]: false }));
             setHighEntropyResults(prevResults => ({ ...prevResults, [ticket.ticketId]: data }));
-            
+
             return {
               ...ticket,
               totalAttempts: ticket.totalAttempts + 1,
@@ -214,22 +235,19 @@ export const useLotto = (): UseLottoReturn => {
    * @param ticket - The lotto ticket (instance)
    * @returns Promise with API response when the request is accepted
    */
-  const requestHighEntropyAttempt = useCallback(
-    async (ticket: LottoTicket): Promise<InstanceHighModeResponse> => {
-      setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: true }));
-      setHighEntropyResults(prev => ({ ...prev, [ticket.ticketId]: null }));
+  const requestHighEntropyAttempt = useCallback(async (ticket: LottoTicket): Promise<InstanceHighModeResponse> => {
+    setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: true }));
+    setHighEntropyResults(prev => ({ ...prev, [ticket.ticketId]: null }));
 
-      try {
-        const result = await requestInstanceHighMode(ticket.id);
-        setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: false }));
-        return result;
-      } catch (err: any) {
-        setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: false }));
-        throw err;
-      }
-    },
-    []
-  );
+    try {
+      const result = await requestInstanceHighMode(ticket.id);
+      setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: false }));
+      return result;
+    } catch (err: any) {
+      setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: false }));
+      throw err;
+    }
+  }, []);
 
   return {
     tickets,
@@ -238,6 +256,7 @@ export const useLotto = (): UseLottoReturn => {
     isConnected,
     loading,
     error,
+    lastPaymentEvent,
     refreshTickets,
     getTicketDetail,
     getTicketAttempts,
