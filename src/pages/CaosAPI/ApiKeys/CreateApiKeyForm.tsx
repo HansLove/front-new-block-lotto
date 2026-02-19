@@ -68,10 +68,10 @@ export default function CreateApiKeyForm({ onApiKeyCreated, onError, onSuccess }
   };
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800/50 to-slate-900/30 p-6 backdrop-blur-sm">
+    <div className="rounded-xl border border-white/10 bg-surface-elevated p-6">
       <h2 className="mb-6 flex items-center text-xl font-semibold text-white">
-        <div className="mr-3 rounded-full bg-gradient-to-r from-red-500 to-orange-600 p-2">
-          <KeyIcon className="h-5 w-5 text-white" />
+        <div className="mr-3 rounded-full bg-action-primary p-2">
+          <KeyIcon className="h-5 w-5 text-black" />
         </div>
         Create new API Key
       </h2>
@@ -79,7 +79,7 @@ export default function CreateApiKeyForm({ onApiKeyCreated, onError, onSuccess }
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label htmlFor="name" className="mb-2 block text-sm font-medium text-slate-300">
+            <label htmlFor="name" className="mb-2 block text-sm font-medium text-white/45">
               Application name
             </label>
             <input
@@ -93,7 +93,7 @@ export default function CreateApiKeyForm({ onApiKeyCreated, onError, onSuccess }
                 },
                 onChange: () => clearErrors('name'),
               })}
-              className="w-full rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-400 backdrop-blur-sm transition-all duration-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-white placeholder-white/20 outline-none transition-colors focus:border-action-primary/50 focus:ring-1 focus:ring-action-primary/20"
               placeholder="My Application"
               disabled={isSubmitting}
             />
@@ -101,7 +101,7 @@ export default function CreateApiKeyForm({ onApiKeyCreated, onError, onSuccess }
           </div>
 
           <div>
-            <label htmlFor="webhook" className="mb-2 block text-sm font-medium text-slate-300">
+            <label htmlFor="webhook" className="mb-2 block text-sm font-medium text-white/45">
               Webhook URL
             </label>
             <input
@@ -115,7 +115,7 @@ export default function CreateApiKeyForm({ onApiKeyCreated, onError, onSuccess }
                 },
                 onChange: () => clearErrors('webhook'),
               })}
-              className="w-full rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-400 backdrop-blur-sm transition-all duration-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-white placeholder-white/20 outline-none transition-colors focus:border-action-primary/50 focus:ring-1 focus:ring-action-primary/20"
               placeholder="https://api.myapp.com/webhook"
               disabled={isSubmitting}
             />
@@ -126,11 +126,11 @@ export default function CreateApiKeyForm({ onApiKeyCreated, onError, onSuccess }
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-lg bg-gradient-to-r from-red-600 to-orange-600 px-6 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:from-red-700 hover:to-orange-700 hover:shadow-red-500/25 disabled:cursor-not-allowed disabled:from-red-800 disabled:to-orange-800 md:w-auto"
+          className="w-full rounded-lg bg-action-primary px-6 py-3 font-medium text-black transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
         >
           {isSubmitting ? (
             <div className="flex items-center justify-center">
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
               Creating...
             </div>
           ) : (

@@ -62,7 +62,7 @@ export default function Modal({
 
     const modal = modalRef.current;
     const focusableElements = modal.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
 
     if (focusableElements.length === 0) return;
@@ -116,8 +116,8 @@ export default function Modal({
       {/* Contenido del modal */}
       <div
         ref={modalRef}
-        className={`relative z-10 max-h-[90vh] w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all duration-300 ${className}`}
-        onClick={(e) => e.stopPropagation()}
+        className={`relative z-10 max-h-[90vh] w-full max-w-md transform overflow-hidden rounded-lg bg-surface-elevated shadow-xl transition-all duration-300 ${className}`}
+        onClick={e => e.stopPropagation()}
       >
         {children}
       </div>
