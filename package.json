@@ -6,8 +6,8 @@
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "node init && vite",
+    "build": "node init && tsc && vite build",
     "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
