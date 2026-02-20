@@ -2,7 +2,7 @@ import { type Config } from 'tailwindcss'
 
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  darkMode: 'class',
+  darkMode: false,
   theme: {
     extend: {
       dropShadow: {
@@ -30,6 +30,16 @@ export default {
         },
       },
       colors: {
+        // Semantic surface tokens
+        surface: {
+          base: '#07070a',      // bg-surface-base     → fondo global de todas las paginas
+          elevated: '#0e0e14',  // bg-surface-elevated → cards, modals, panels
+        },
+        // Semantic action tokens
+        action: {
+          primary: '#f59e0b',   // bg-action-primary / text-action-primary → CTA principal
+          hover: '#fbbf24',     // bg-action-hover  → hover del CTA
+        },
         // Block Lotto color palette
         lotto: {
           green: {

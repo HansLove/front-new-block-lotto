@@ -12,14 +12,14 @@ interface OneTimeKeyModalProps {
 
 export default function OneTimeKeyModal({ isOpen, apiKey, keyName, onClose }: OneTimeKeyModalProps) {
   const [copied, setCopied] = useState(false);
-  const [hasCopied, setHasCopied] = useState(false); // Permanent state for copy action
+  const [hasCopied, setHasCopied] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
 
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(apiKey);
       setCopied(true);
-      setHasCopied(true); // Set permanent copy state
+      setHasCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
@@ -40,26 +40,26 @@ export default function OneTimeKeyModal({ isOpen, apiKey, keyName, onClose }: On
       onClose={handleClose}
       closeOnOverlayClick={false}
       closeOnEscape={false}
-      className="border border-slate-700"
+      className="border border-white/10"
     >
       <div className="p-6">
         {/* Header */}
         <div className="mb-4 flex items-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-green-700 bg-green-900/30">
-            <KeyIcon className="h-5 w-5 text-green-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-lotto-green-500/30 bg-lotto-green-500/10">
+            <KeyIcon className="h-5 w-5 text-lotto-green-400" />
           </div>
           <div className="ml-3">
             <h3 className="text-lg font-semibold text-white">API Key Created Successfully</h3>
-            <p className="text-sm text-slate-400">{keyName}</p>
+            <p className="text-sm text-white/35">{keyName}</p>
           </div>
         </div>
 
         {/* Warning */}
-        <div className="mb-4 flex items-start space-x-3 rounded-lg border border-yellow-700 bg-yellow-900/20 p-3">
-          <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-400" />
+        <div className="mb-4 flex items-start space-x-3 rounded-lg border border-action-primary/30 bg-action-primary/10 p-3">
+          <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-action-primary" />
           <div>
-            <p className="text-sm font-medium text-yellow-400">Important Security Notice</p>
-            <p className="mt-1 text-xs text-yellow-300">
+            <p className="text-sm font-medium text-action-primary">Important Security Notice</p>
+            <p className="mt-1 text-xs text-action-primary/70">
               This is the only time you&apos;ll be able to see this API key. Make sure to copy and store it securely.
             </p>
           </div>
@@ -67,22 +67,21 @@ export default function OneTimeKeyModal({ isOpen, apiKey, keyName, onClose }: On
 
         {/* API Key Display */}
         <div className="mb-4">
-          <label className="mb-2 block text-xs font-medium text-slate-400">Your API Key</label>
+          <label className="mb-2 block text-xs font-medium text-white/25">Your API Key</label>
           <div className="flex items-center space-x-2">
-            <code className="flex-1 rounded border border-slate-600 bg-slate-900 px-3 py-2 font-mono text-sm text-slate-300">
+            <code className="flex-1 rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-sm text-white/60">
               {partialKey}
             </code>
             <button
               onClick={copyToClipboard}
-              className="flex items-center space-x-2 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+              className="flex items-center space-x-2 rounded bg-action-primary px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-action-hover"
             >
-              {copied && (
+              {copied ? (
                 <>
                   <CheckIcon className="h-4 w-4" />
                   <span>Copied!</span>
                 </>
-              )}
-              {!copied && (
+              ) : (
                 <>
                   <ClipboardDocumentIcon className="h-4 w-4" />
                   <span>Copy</span>
@@ -99,9 +98,9 @@ export default function OneTimeKeyModal({ isOpen, apiKey, keyName, onClose }: On
               type="checkbox"
               checked={acknowledged}
               onChange={e => setAcknowledged(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-800 text-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-0"
+              className="mt-0.5 h-4 w-4 rounded border-white/10 bg-white/[0.04] text-action-primary focus:ring-1 focus:ring-action-primary/20"
             />
-            <span className="text-sm text-slate-300">
+            <span className="text-sm text-white/45">
               I understand this key will not be shown again and I have stored it securely
             </span>
           </label>
@@ -112,8 +111,10 @@ export default function OneTimeKeyModal({ isOpen, apiKey, keyName, onClose }: On
           <button
             onClick={handleClose}
             disabled={!hasCopied || !acknowledged}
-            className={`rounded px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              hasCopied && acknowledged ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-600 hover:bg-slate-700'
+            className={`rounded px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              hasCopied && acknowledged
+                ? 'bg-action-primary text-black hover:bg-action-hover'
+                : 'border border-white/10 text-white/45'
             }`}
           >
             I&apos;ve Secured My Key

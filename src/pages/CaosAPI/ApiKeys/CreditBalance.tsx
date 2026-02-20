@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 interface CreditBalanceProps {
   onError: (error: string) => void;
-  onDepositClick: () => void; // Nuevo prop para manejar el clic en el botón de depósito
+  onDepositClick: () => void;
 }
 
 interface UserBalance {
@@ -29,7 +29,7 @@ export default function CreditBalance({ onError, onDepositClick }: CreditBalance
 
       // Mock data - replace with actual API call
       const mockBalance: UserBalance = {
-        credits: 1000, // Default free credits for new users
+        credits: 1000,
         totalEarned: 1000,
         totalSpent: 0,
         lastUpdated: new Date().toISOString(),
@@ -59,12 +59,12 @@ export default function CreditBalance({ onError, onDepositClick }: CreditBalance
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6">
+      <div className="rounded-xl border border-white/10 bg-surface-elevated p-6">
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 animate-pulse rounded-full bg-slate-700"></div>
+          <div className="h-10 w-10 animate-pulse rounded-full bg-white/[0.06]" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-24 animate-pulse rounded bg-slate-700"></div>
-            <div className="h-3 w-16 animate-pulse rounded bg-slate-700"></div>
+            <div className="h-4 w-24 animate-pulse rounded bg-white/[0.06]" />
+            <div className="h-3 w-16 animate-pulse rounded bg-white/[0.04]" />
           </div>
         </div>
       </div>
@@ -76,69 +76,65 @@ export default function CreditBalance({ onError, onDepositClick }: CreditBalance
   }
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800/50 to-slate-900/30 p-6 backdrop-blur-sm">
+    <div className="rounded-xl border border-white/10 bg-surface-elevated p-6">
       <div className="mb-4 flex items-center space-x-3">
-        <div className="rounded-full bg-gradient-to-r from-orange-500 to-red-600 p-2">
-          <BanknotesIcon className="h-6 w-6 text-white" />
+        <div className="rounded-full bg-action-primary p-2">
+          <BanknotesIcon className="h-6 w-6 text-black" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-white dark:text-gray-900">Credit Balance</h2>
-          <p className="text-sm text-slate-400 dark:text-slate-600">Your available credits for API usage</p>
+          <h2 className="text-xl font-semibold text-white">Credit Balance</h2>
+          <p className="text-sm text-white/35">Your available credits for API usage</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Current Balance */}
-        <div className="rounded-lg border border-slate-600 bg-slate-800/40 p-4 backdrop-blur-sm">
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
           <div className="flex items-center space-x-2">
-            <CurrencyDollarIcon className="h-5 w-5 text-green-400" />
-            <span className="text-sm font-medium text-slate-300 dark:text-slate-700">Available</span>
+            <CurrencyDollarIcon className="h-5 w-5 text-lotto-green-400" />
+            <span className="text-sm font-medium text-white/45">Available</span>
           </div>
           <div className="mt-2">
-            <span className="text-2xl font-bold text-white dark:text-gray-900">{formatCredits(balance.credits)}</span>
-            <span className="ml-1 text-sm text-slate-400">credits</span>
+            <span className="text-2xl font-bold text-white">{formatCredits(balance.credits)}</span>
+            <span className="ml-1 text-sm text-white/25">credits</span>
           </div>
         </div>
 
         {/* Total Earned */}
-        <div className="rounded-lg border border-slate-600 bg-slate-800/40 p-4 backdrop-blur-sm">
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
           <div className="flex items-center space-x-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500">
-              <span className="text-xs font-bold text-white">+</span>
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-lotto-green-500/20">
+              <span className="text-xs font-bold text-lotto-green-400">+</span>
             </div>
-            <span className="text-sm font-medium text-slate-300 dark:text-slate-700">Earned</span>
+            <span className="text-sm font-medium text-white/45">Earned</span>
           </div>
           <div className="mt-2">
-            <span className="text-2xl font-bold text-white dark:text-gray-900">
-              {formatCredits(balance.totalEarned)}
-            </span>
-            <span className="ml-1 text-sm text-slate-400">credits</span>
+            <span className="text-2xl font-bold text-white">{formatCredits(balance.totalEarned)}</span>
+            <span className="ml-1 text-sm text-white/25">credits</span>
           </div>
         </div>
 
         {/* Total Spent */}
-        <div className="rounded-lg border border-slate-600 bg-slate-800/40 p-4 backdrop-blur-sm">
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
           <div className="flex items-center space-x-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500">
-              <span className="text-xs font-bold text-white">-</span>
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-action-primary/20">
+              <span className="text-xs font-bold text-action-primary">-</span>
             </div>
-            <span className="text-sm font-medium text-slate-300 dark:text-slate-700">Spent</span>
+            <span className="text-sm font-medium text-white/45">Spent</span>
           </div>
           <div className="mt-2">
-            <span className="text-2xl font-bold text-white dark:text-gray-900">
-              {formatCredits(balance.totalSpent)}
-            </span>
-            <span className="ml-1 text-sm text-slate-400">credits</span>
+            <span className="text-2xl font-bold text-white">{formatCredits(balance.totalSpent)}</span>
+            <span className="ml-1 text-sm text-white/25">credits</span>
           </div>
         </div>
       </div>
 
       {/* Last Updated */}
-      <div className="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
-        <span className="text-xs text-slate-500">Last updated: {formatDate(balance.lastUpdated)}</span>
+      <div className="mt-4 flex items-center justify-between border-t border-white/[0.05] pt-4">
+        <span className="text-xs text-white/25">Last updated: {formatDate(balance.lastUpdated)}</span>
         <button
           onClick={fetchBalance}
-          className="text-xs text-orange-400 transition-colors duration-200 hover:text-orange-300"
+          className="text-xs text-action-primary transition-colors duration-200 hover:text-action-hover"
         >
           Refresh
         </button>
@@ -147,8 +143,8 @@ export default function CreditBalance({ onError, onDepositClick }: CreditBalance
       {/* Make Deposit Button */}
       <div className="mt-6 text-center">
         <button
-          onClick={onDepositClick} // Usar el nuevo prop
-          className="rounded-lg bg-gradient-to-r from-orange-500 to-red-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:from-orange-600 hover:to-red-700"
+          onClick={onDepositClick}
+          className="rounded-lg bg-action-primary px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-action-hover"
         >
           Make Deposit
         </button>

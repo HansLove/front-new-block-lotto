@@ -2,23 +2,20 @@ export default function PrivacyPolicy() {
   const LAST_UPDATED = 'August 17, 2025';
 
   return (
-    <div className="min-h-screen bg-[#0F0F1B] text-white">
+    <div className="min-h-screen bg-surface-base text-white">
       {/* Header */}
       <header className="border-b border-white/10 px-6 pb-6 pt-8">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <a href="/" className="flex items-center gap-3 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <a
+            href="/"
+            className="flex items-center gap-3 rounded focus:outline-none focus:ring-2 focus:ring-action-primary/50"
+          >
             <span className="sr-only">Block Lotto</span>
 
-            {/* Logo that adapts to color scheme */}
-            <picture>
-              <source srcSet="/images/logo-light.png" media="(prefers-color-scheme: dark)" />
-              <img className="h-10 w-auto" src="/images/logo.png" alt="Block Lotto" />
-            </picture>
+            <img className="h-10 w-auto" src="/images/logo-light.png" alt="Block Lotto" />
           </a>
 
-          <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl">
-            <span aria-hidden>🔒</span> Privacy Policy
-          </h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">Privacy Policy</h1>
         </div>
       </header>
 
@@ -27,9 +24,9 @@ export default function PrivacyPolicy() {
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-[280px_minmax(0,1fr)]">
           {/* TOC */}
           <nav aria-label="Table of contents" className="self-start lg:sticky lg:top-6">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <p className="mb-3 text-sm font-semibold text-white/80">On this page</p>
-              <ul className="space-y-2 text-sm text-gray-300">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+              <p className="mb-3 text-sm font-semibold text-white/70">On this page</p>
+              <ul className="space-y-2 text-sm text-white/35">
                 {[
                   ['intro', 'Introduction'],
                   ['collection', '1. Data We Collect'],
@@ -50,7 +47,7 @@ export default function PrivacyPolicy() {
                   <li key={id}>
                     <a
                       href={`#${id}`}
-                      className="rounded hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="rounded hover:text-white focus:outline-none focus:ring-2 focus:ring-action-primary/50"
                     >
                       {label}
                     </a>
@@ -61,7 +58,7 @@ export default function PrivacyPolicy() {
           </nav>
 
           {/* Content */}
-          <article className="max-w-3xl space-y-10 text-[17px] leading-relaxed text-gray-200">
+          <article className="max-w-3xl space-y-10 text-[17px] leading-relaxed text-white/45">
             <section id="intro" aria-labelledby="intro-title" className="scroll-mt-24">
               <h2 id="intro-title" className="text-xl font-semibold text-white">
                 Introduction
@@ -71,7 +68,7 @@ export default function PrivacyPolicy() {
                 use it, and the choices you have. It covers our web properties, APIs (including
                 Randomization-as-a-Service), and operational dashboards related to mining and gaming utilities.
               </p>
-              <p className="mt-3 text-sm text-gray-400">
+              <p className="mt-3 text-sm text-white/25">
                 Last updated: <time dateTime="2025-08-17">{LAST_UPDATED}</time>
               </p>
             </section>
@@ -200,7 +197,7 @@ export default function PrivacyPolicy() {
                 <li>Secrets management and least-privilege principles.</li>
                 <li>Monitoring, auditing, and incident response playbooks.</li>
               </ul>
-              <p className="mt-2 text-gray-300">
+              <p className="mt-2 text-white/35">
                 No method is 100% secure, but we continuously improve our safeguards.
               </p>
             </section>
@@ -274,7 +271,7 @@ export default function PrivacyPolicy() {
               </p>
             </section>
 
-            <p className="pt-4 text-sm text-gray-500">
+            <p className="pt-4 text-sm text-white/25">
               This summary is not legal advice. For compliance in a specific jurisdiction, consult your counsel.
             </p>
           </article>

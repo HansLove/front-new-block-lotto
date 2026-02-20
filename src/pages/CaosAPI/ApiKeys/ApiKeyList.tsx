@@ -43,8 +43,8 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
   } = useListApiKeys({ apiKeys, onApiKeysChange, onError, onSuccess });
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800/50 to-slate-900/30 backdrop-blur-sm">
-      <div className="border-b border-slate-700 p-6">
+    <div className="rounded-xl border border-white/10 bg-surface-elevated">
+      <div className="border-b border-white/[0.07] p-6">
         <h2 className="text-xl font-semibold text-white">Your API Keys</h2>
       </div>
 
@@ -52,17 +52,17 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
         {isLoadingKeys && (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center space-y-4">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-500 border-t-transparent"></div>
-              <span className="text-slate-400">Loading API Keys...</span>
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-action-primary/20 border-t-action-primary" />
+              <span className="text-white/35">Loading API Keys...</span>
             </div>
           </div>
         )}
 
         {!isLoadingKeys && apiKeys.length === 0 && (
           <div className="py-8 text-center">
-            <KeyIcon className="mx-auto mb-3 h-12 w-12 text-slate-600" />
-            <p className="text-slate-400">You don&apos;t have any API Keys created yet</p>
-            <p className="text-sm text-slate-500">Create your first API Key using the form above</p>
+            <KeyIcon className="mx-auto mb-3 h-12 w-12 text-white/15" />
+            <p className="text-white/35">You don&apos;t have any API Keys created yet</p>
+            <p className="text-sm text-white/25">Create your first API Key using the form above</p>
           </div>
         )}
 
@@ -71,22 +71,22 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
             {apiKeys.map(key => (
               <div
                 key={key._id}
-                className="rounded-lg border border-slate-600 bg-slate-800/40 p-4 backdrop-blur-sm transition-all duration-200 hover:border-slate-500 hover:bg-slate-800/60"
+                className="rounded-lg border border-white/10 bg-white/[0.03] p-4 transition-all duration-200 hover:border-white/20 hover:bg-white/[0.05]"
               >
                 {/* Header con nombre y toggle */}
                 <div className="flex items-center justify-between gap-2">
                   <button
                     onClick={() => toggleKeyExpansion(key._id)}
-                    className="-m-2 flex min-w-0 flex-1 items-center space-x-3 rounded-lg p-2 text-left transition-colors hover:bg-slate-700/30"
+                    className="-m-2 flex min-w-0 flex-1 items-center space-x-3 rounded-lg p-2 text-left transition-colors hover:bg-white/[0.04]"
                   >
                     <ChevronRightIcon
-                      className={`h-5 w-5 flex-shrink-0 text-slate-400 transition-transform duration-300 ease-in-out ${
+                      className={`h-5 w-5 flex-shrink-0 text-white/25 transition-transform duration-300 ease-in-out ${
                         expandedKeys.has(key._id) ? 'rotate-90' : 'rotate-0'
                       }`}
                     />
                     <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
                       <h3 className="truncate text-lg font-medium text-white">{key.name}</h3>
-                      <span className="flex-shrink-0 self-start rounded-full border border-green-700 bg-green-900/30 px-3 py-1 text-xs font-medium text-green-400 sm:self-center">
+                      <span className="flex-shrink-0 self-start rounded-full border border-lotto-green-500/30 bg-lotto-green-500/10 px-3 py-1 text-xs font-medium text-lotto-green-400 sm:self-center">
                         Active
                       </span>
                     </div>
@@ -97,7 +97,7 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
                     {editingKey !== key._id && (
                       <button
                         onClick={() => startEdit(key)}
-                        className="p-2 text-slate-400 transition-colors hover:text-blue-400"
+                        className="p-2 text-white/25 transition-colors hover:text-action-primary"
                         title="Edit webhook"
                       >
                         <PencilIcon className="h-4 w-4" />
@@ -106,7 +106,7 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
                     <button
                       onClick={() => handleDeleteApiKey(key._id)}
                       disabled={isLoading || isDeleting}
-                      className="p-2 text-slate-400 transition-colors hover:text-red-400 disabled:opacity-50"
+                      className="p-2 text-white/25 transition-colors hover:text-red-400 disabled:opacity-50"
                       title="Delete API Key"
                     >
                       <TrashIcon className="h-4 w-4" />
@@ -114,7 +114,7 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
                   </div>
                 </div>
 
-                {/* Contenido expandible con animación */}
+                {/* Contenido expandible con animacion */}
                 <div
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
                     expandedKeys.has(key._id) ? 'mt-4 max-h-96 opacity-100' : 'mt-0 max-h-0 opacity-0'
@@ -123,7 +123,7 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
                   <div className="space-y-4 pl-4 pr-2 sm:pl-8">
                     {/* Webhook */}
                     <div className="mb-3">
-                      <div className="mb-1 block text-xs font-medium text-slate-400">Webhook</div>
+                      <div className="mb-1 block text-xs font-medium text-white/25">Webhook</div>
                       {editingKey === key._id ? (
                         <form
                           onSubmit={handleSubmit(handleUpdateWebhook)}
@@ -140,7 +140,7 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
                                   message: 'Please enter a valid URL',
                                 },
                               })}
-                              className="w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                              className="w-full rounded border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-action-primary/50 focus:ring-1 focus:ring-action-primary/20"
                               placeholder="https://example.com/webhook"
                               disabled={isSubmitting || isLoading}
                             />
@@ -150,11 +150,11 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
                             <button
                               type="submit"
                               disabled={isLoading || isSubmitting}
-                              className="flex-1 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 sm:flex-none"
+                              className="flex-1 rounded-lg bg-action-primary px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-action-hover disabled:opacity-50 sm:flex-none"
                             >
                               {isSubmitting || isLoading ? (
                                 <div className="flex items-center justify-center">
-                                  <div className="mr-1 h-3 w-3 animate-spin rounded-full border border-white border-t-transparent"></div>
+                                  <div className="mr-1 h-3 w-3 animate-spin rounded-full border border-black border-t-transparent" />
                                   Saving...
                                 </div>
                               ) : (
@@ -164,7 +164,7 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
                             <button
                               type="button"
                               onClick={cancelEdit}
-                              className="flex-1 rounded-lg bg-slate-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-slate-700 sm:flex-none"
+                              className="flex-1 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-white/45 transition-colors hover:border-white/20 hover:text-white/70 sm:flex-none"
                             >
                               Cancel
                             </button>
@@ -172,16 +172,16 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
                         </form>
                       ) : (
                         <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-                          <code className="w-full truncate break-all rounded border border-slate-600 bg-slate-900 px-3 py-2 font-mono text-sm text-slate-300 sm:max-w-lg sm:flex-1">
+                          <code className="w-full truncate break-all rounded border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-sm text-white/60 sm:max-w-lg sm:flex-1">
                             {key.webhook}
                           </code>
                           <button
                             onClick={() => copyWebhookToClipboard(key.webhook, `${key._id}-webhook`)}
-                            className="self-start p-2 text-slate-400 transition-colors hover:text-white sm:self-center"
+                            className="self-start p-2 text-white/25 transition-colors hover:text-white sm:self-center"
                             title="Copy webhook"
                           >
                             {copiedWebhooks.has(`${key._id}-webhook`) ? (
-                              <CheckIcon className="h-4 w-4 text-green-400" />
+                              <CheckIcon className="h-4 w-4 text-lotto-green-400" />
                             ) : (
                               <ClipboardDocumentIcon className="h-4 w-4" />
                             )}
@@ -191,7 +191,7 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
                     </div>
 
                     {/* Metadatos */}
-                    <div className="flex flex-col gap-2 border-t border-slate-700/50 pt-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:gap-4">
+                    <div className="flex flex-col gap-2 border-t border-white/[0.05] pt-2 text-xs text-white/25 sm:flex-row sm:items-center sm:gap-4">
                       <span>Created: {formatDate(key.createdAt)}</span>
                       {key.lastUsed && <span>Last used: {formatDate(key.lastUsed)}</span>}
                     </div>
@@ -203,7 +203,7 @@ export default function ApiKeyList({ apiKeys, isLoadingKeys, onApiKeysChange, on
         )}
       </div>
 
-      {/* Modal de confirmación para eliminar API Key */}
+      {/* Modal de confirmacion para eliminar API Key */}
       <ConfirmationModal
         isOpen={deletingKey !== null}
         onClose={confirmDelete}

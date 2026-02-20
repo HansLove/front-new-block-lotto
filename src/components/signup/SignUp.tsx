@@ -123,19 +123,23 @@ const SignUp: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-surface-base px-4 py-12">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lotto-blue-500 text-xl font-bold text-white">
               B
             </div>
-            <span className="text-xl font-bold text-gray-900">Block-Lotto</span>
+            <span className="text-xl font-bold text-white">Block-Lotto</span>
           </Link>
-          <h2 className="mt-6 text-2xl font-bold text-gray-900">Create your account</h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <h2 className="mt-6 text-2xl font-bold text-white">Create your account</h2>
+          <p className="mt-2 text-sm text-white/35">
             Or{' '}
-            <Link to="/" onClick={handleSignInLink} className="font-medium text-lotto-green-600 hover:text-lotto-green-700">
+            <Link
+              to="/"
+              onClick={handleSignInLink}
+              className="font-medium text-lotto-green-400 hover:text-lotto-green-500"
+            >
               sign in to your existing account
             </Link>
           </p>
@@ -143,14 +147,14 @@ const SignUp: React.FC = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+              <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-sm font-medium text-white/45">
                 Full Name
               </label>
               <input
@@ -174,22 +178,24 @@ const SignUp: React.FC = () => {
                   onChange: clearError,
                 })}
                 className={clsx(
-                  'mt-1 block w-full rounded-lg border bg-white px-4 py-3 text-gray-900 transition-colors focus:outline-none focus:ring-2',
-                  errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500/20'
+                  'mt-1 block w-full rounded-lg border bg-white/[0.04] px-4 py-3 text-white placeholder-white/20 outline-none transition-colors focus:ring-1',
+                  errors.name
+                    ? 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20'
+                    : 'border-white/10 focus:border-action-primary/50 focus:ring-action-primary/20'
                 )}
                 disabled={isLoading}
                 aria-invalid={!!errors.name}
                 aria-describedby={errors.name ? 'name-error' : undefined}
               />
               {errors.name && (
-                <p id="name-error" className="mt-1 text-sm text-red-600">
+                <p id="name-error" className="mt-1 text-sm text-red-400">
                   {errors.name.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-white/45">
                 Email Address
               </label>
               <input
@@ -209,15 +215,17 @@ const SignUp: React.FC = () => {
                   onChange: clearError,
                 })}
                 className={clsx(
-                  'mt-1 block w-full rounded-lg border bg-white px-4 py-3 text-gray-900 transition-colors focus:outline-none focus:ring-2',
-                  errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500/20'
+                  'mt-1 block w-full rounded-lg border bg-white/[0.04] px-4 py-3 text-white placeholder-white/20 outline-none transition-colors focus:ring-1',
+                  errors.email
+                    ? 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20'
+                    : 'border-white/10 focus:border-action-primary/50 focus:ring-action-primary/20'
                 )}
                 disabled={isLoading}
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? 'email-error' : undefined}
               />
               {errors.email && (
-                <p id="email-error" className="mt-1 text-sm text-red-600">
+                <p id="email-error" className="mt-1 text-sm text-red-400">
                   {errors.email.message}
                 </p>
               )}
@@ -225,7 +233,7 @@ const SignUp: React.FC = () => {
 
             <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium text-white/45">
                   Password
                 </label>
                 <div className="relative">
@@ -253,8 +261,10 @@ const SignUp: React.FC = () => {
                       onChange: clearError,
                     })}
                     className={clsx(
-                      'mt-1 block w-full rounded-lg border bg-white px-4 py-3 pr-10 text-gray-900 transition-colors focus:outline-none focus:ring-2',
-                      errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500/20'
+                      'mt-1 block w-full rounded-lg border bg-white/[0.04] px-4 py-3 pr-10 text-white placeholder-white/20 outline-none transition-colors focus:ring-1',
+                      errors.password
+                        ? 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20'
+                        : 'border-white/10 focus:border-action-primary/50 focus:ring-action-primary/20'
                     )}
                     disabled={isLoading}
                     aria-invalid={!!errors.password}
@@ -263,22 +273,26 @@ const SignUp: React.FC = () => {
                   <button
                     type="button"
                     tabIndex={-1}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60"
                     onClick={() => setShowPassword(v => !v)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <AiOutlineEyeInvisible className="h-5 w-5" /> : <AiOutlineEye className="h-5 w-5" />}
+                    {showPassword ? (
+                      <AiOutlineEyeInvisible className="h-5 w-5" />
+                    ) : (
+                      <AiOutlineEye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
                 {errors.password && (
-                  <p id="password-error" className="mt-1 text-sm text-red-600">
+                  <p id="password-error" className="mt-1 text-sm text-red-400">
                     {errors.password.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/45">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -292,10 +306,10 @@ const SignUp: React.FC = () => {
                       onChange: clearError,
                     })}
                     className={clsx(
-                      'block mt-1 w-full rounded-lg border bg-white px-4 py-3 pr-10 text-gray-900 transition-colors focus:outline-none focus:ring-2',
+                      'mt-1 block w-full rounded-lg border bg-white/[0.04] px-4 py-3 pr-10 text-white placeholder-white/20 outline-none transition-colors focus:ring-1',
                       errors.confirmPassword
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500/20'
+                        ? 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20'
+                        : 'border-white/10 focus:border-action-primary/50 focus:ring-action-primary/20'
                     )}
                     disabled={isLoading}
                     aria-invalid={!!errors.confirmPassword}
@@ -304,15 +318,19 @@ const SignUp: React.FC = () => {
                   <button
                     type="button"
                     tabIndex={-1}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60"
                     onClick={() => setShowConfirmPassword(v => !v)}
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showConfirmPassword ? <AiOutlineEyeInvisible className="h-5 w-5" /> : <AiOutlineEye className="h-5 w-5" />}
+                    {showConfirmPassword ? (
+                      <AiOutlineEyeInvisible className="h-5 w-5" />
+                    ) : (
+                      <AiOutlineEye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p id="confirmPassword-error" className="mt-1 text-sm text-red-600">
+                  <p id="confirmPassword-error" className="mt-1 text-sm text-red-400">
                     {errors.confirmPassword.message}
                   </p>
                 )}
@@ -324,7 +342,7 @@ const SignUp: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-lotto-green-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-lotto-green-600 focus:outline-none focus:ring-2 focus:ring-lotto-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-action-primary px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-action-hover focus:outline-none focus:ring-2 focus:ring-action-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? 'Creating account...' : 'Sign up'}
             </button>
@@ -332,10 +350,10 @@ const SignUp: React.FC = () => {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-gray-50 px-2 text-gray-500">Or continue with</span>
+              <span className="bg-surface-base px-2 text-white/25">Or continue with</span>
             </div>
           </div>
 
@@ -348,7 +366,7 @@ const SignUp: React.FC = () => {
               }}
               disabled={isLoading}
               text="signup_with"
-              theme="outline"
+              theme="filled_black"
               size="large"
               shape="rectangular"
             />

@@ -114,7 +114,7 @@ export default function LoginModal() {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -128,29 +128,29 @@ export default function LoginModal() {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="relative w-full max-w-md transform rounded-2xl border border-gray-200 bg-white p-8 text-left align-middle shadow-2xl transition-all">
-                <div className="absolute -right-4 -top-4 rounded-full bg-white border border-gray-200 p-1 shadow-lg">
-                  <button onClick={closeLoginModal} className="p-1 text-gray-600 transition-colors hover:text-gray-900">
+              <Dialog.Panel className="relative w-full max-w-md transform rounded-2xl border border-white/10 bg-surface-elevated p-8 text-left align-middle shadow-2xl transition-all">
+                <div className="absolute -right-4 -top-4 rounded-full border border-white/10 bg-surface-elevated p-1">
+                  <button onClick={closeLoginModal} className="p-1 text-white/45 transition-colors hover:text-white">
                     <XMarkIcon className="h-5 w-5" />
                   </button>
                 </div>
 
-                <Dialog.Title as="h3" className="mb-2 text-center text-2xl font-bold text-gray-900">
+                <Dialog.Title as="h3" className="mb-2 text-center text-2xl font-bold text-white">
                   Welcome Back
                 </Dialog.Title>
-                <p className="mb-6 text-center text-gray-600">Sign in to access your account</p>
+                <p className="mb-6 text-center text-white/35">Sign in to access your account</p>
 
                 {/* General error message */}
                 {error && (
-                  <div className="mb-4 flex items-start rounded-lg border border-red-200 bg-red-50 p-3">
-                    <ExclamationCircleIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-                    <p className="text-sm text-red-800">{error}</p>
+                  <div className="mb-4 flex items-start rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+                    <ExclamationCircleIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-red-400" />
+                    <p className="text-sm text-red-400">{error}</p>
                   </div>
                 )}
 
                 <form onSubmit={handleSubmit(handleEmailLogin)} className="space-y-5">
                   <div>
-                    <h3 className="block text-sm font-medium text-gray-700">Email address</h3>
+                    <h3 className="block text-sm font-medium text-white/45">Email address</h3>
                     <input
                       type="email"
                       id="email"
@@ -163,25 +163,25 @@ export default function LoginModal() {
                         onChange: clearError,
                       })}
                       className={clsx(
-                        'mt-1 block w-full rounded-lg border px-4 py-3 shadow-sm transition-colors focus:ring-2 focus:ring-opacity-50 sm:text-sm',
-                        'bg-white text-gray-900',
+                        'mt-1 block w-full rounded-lg border px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:ring-1',
+                        'bg-white/[0.04]',
                         errors.email
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500'
+                          ? 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20'
+                          : 'border-white/10 focus:border-action-primary/50 focus:ring-action-primary/20'
                       )}
                       disabled={isLoading}
                       aria-invalid={!!errors.email}
                       aria-describedby={errors.email ? 'email-error' : undefined}
                     />
                     {errors.email && (
-                      <p className="mt-1 text-sm text-red-600" id="email-error">
+                      <p className="mt-1 text-sm text-red-400" id="email-error">
                         {errors.email.message}
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <h3 className="block text-sm font-medium text-gray-700">Password</h3>
+                    <h3 className="block text-sm font-medium text-white/45">Password</h3>
                     <input
                       type="password"
                       id="password"
@@ -194,18 +194,18 @@ export default function LoginModal() {
                         onChange: clearError,
                       })}
                       className={clsx(
-                        'mt-1 block w-full rounded-lg border px-4 py-3 shadow-sm transition-colors focus:ring-2 focus:ring-opacity-50 sm:text-sm',
-                        'bg-white text-gray-900',
+                        'mt-1 block w-full rounded-lg border px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:ring-1',
+                        'bg-white/[0.04]',
                         errors.password
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:border-lotto-green-500 focus:ring-lotto-green-500'
+                          ? 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20'
+                          : 'border-white/10 focus:border-action-primary/50 focus:ring-action-primary/20'
                       )}
                       disabled={isLoading}
                       aria-invalid={!!errors.password}
                       aria-describedby={errors.password ? 'password-error' : undefined}
                     />
                     {errors.password && (
-                      <p className="mt-1 text-sm text-red-600" id="password-error">
+                      <p className="mt-1 text-sm text-red-400" id="password-error">
                         {errors.password.message}
                       </p>
                     )}
@@ -217,10 +217,10 @@ export default function LoginModal() {
                         id="remember-me"
                         type="checkbox"
                         {...register('rememberMe')}
-                        className="h-4 w-4 rounded border-gray-300 text-lotto-green-600 focus:ring-lotto-green-500"
+                        className="h-4 w-4 rounded border-white/10 text-action-primary focus:ring-action-primary/20"
                         disabled={isLoading}
                       />
-                      <h3 className="ml-2 block text-sm text-gray-700">Remember me</h3>
+                      <h3 className="ml-2 block text-sm text-white/45">Remember me</h3>
                     </div>
 
                     <div className="text-sm">
@@ -231,7 +231,7 @@ export default function LoginModal() {
                           closeLoginModal();
                           navigate('/forgot-password');
                         }}
-                        className="font-medium text-lotto-green-600 hover:text-lotto-green-700"
+                        className="font-medium text-lotto-green-400 hover:text-lotto-green-500"
                       >
                         Forgot your password?
                       </button>
@@ -241,7 +241,7 @@ export default function LoginModal() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex w-full transform justify-center rounded-lg border border-transparent bg-lotto-green-500 px-4 py-3 text-sm font-medium text-white shadow-sm transition-all hover:scale-[1.02] hover:bg-lotto-green-600 focus:outline-none focus:ring-2 focus:ring-lotto-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full transform justify-center rounded-lg border border-transparent bg-action-primary px-4 py-3 text-sm font-semibold text-black transition-all hover:scale-[1.02] hover:bg-action-hover focus:outline-none focus:ring-2 focus:ring-action-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoading ? 'Signing in...' : 'Sign in'}
                   </button>
@@ -250,10 +250,10 @@ export default function LoginModal() {
                 <div className="mt-6">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-300" />
+                      <div className="w-full border-t border-white/10" />
                     </div>
                     <div className="relative flex justify-center text-sm">
-                      <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                      <span className="bg-surface-elevated px-2 text-white/25">Or continue with</span>
                     </div>
                   </div>
 
@@ -266,14 +266,14 @@ export default function LoginModal() {
                       }}
                       disabled={isLoading}
                       text="signin_with"
-                      theme="outline"
+                      theme="filled_black"
                       size="medium"
                       shape="rectangular"
                     />
                   </div>
                 </div>
 
-                <p className="mt-6 text-center text-sm text-gray-600">
+                <p className="mt-6 text-center text-sm text-white/35">
                   Don&apos;t have an account?{' '}
                   <button
                     type="button"
@@ -282,7 +282,7 @@ export default function LoginModal() {
                       closeLoginModal();
                       navigate('/signup');
                     }}
-                    className="font-semibold text-lotto-green-600 transition-colors hover:text-lotto-green-700"
+                    className="font-semibold text-lotto-green-400 transition-colors hover:text-lotto-green-500"
                   >
                     Sign up for free
                   </button>
