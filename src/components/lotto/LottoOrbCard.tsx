@@ -44,6 +44,34 @@ function formatExpires(expiresAt: string | number | Date): string {
   return `${days}d`;
 }
 
+const STATUS_CONFIG = {
+  MINING: {
+    dot: 'bg-amber-400',
+    pulse: true,
+    pill: 'border-amber-500/25 bg-amber-500/10 text-amber-400',
+  },
+  ACTIVE: {
+    dot: 'bg-lotto-green-400',
+    pulse: false,
+    pill: 'border-lotto-green-500/25 bg-lotto-green-500/10 text-lotto-green-400',
+  },
+  PAUSED: {
+    dot: 'bg-white/25',
+    pulse: false,
+    pill: 'border-white/10 bg-white/[0.04] text-white/35',
+  },
+  EXPIRED: {
+    dot: 'bg-white/20',
+    pulse: false,
+    pill: 'border-white/10 bg-white/[0.04] text-white/30',
+  },
+  CANCELLED: {
+    dot: 'bg-white/20',
+    pulse: false,
+    pill: 'border-white/10 bg-white/[0.04] text-white/30',
+  },
+} as const;
+
 export function LottoOrbCard({
   ticketId,
   btcAddress,
@@ -80,18 +108,15 @@ export function LottoOrbCard({
     return () => clearTimeout(t);
   }, [recentDelta]);
 
-  const orbParams = useMemo(
-    () => getOrbParams(attemptsTotal, isPlusUltra),
-    [attemptsTotal, isPlusUltra]
-  );
+  const orbParams = useMemo(() => getOrbParams(attemptsTotal, isPlusUltra), [attemptsTotal, isPlusUltra]);
 
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => setVisible(e.isIntersecting),
-      { rootMargin: '50px', threshold: 0 }
-    );
+    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), {
+      rootMargin: '50px',
+      threshold: 0,
+    });
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -103,37 +128,26 @@ export function LottoOrbCard({
   useEffect(() => {
     if (countdown <= 0) return;
     const t = setInterval(() => {
-      setCountdown((s) => Math.max(0, s - 1));
+      setCountdown(s => Math.max(0, s - 1));
     }, 1000);
     return () => clearInterval(t);
   }, [countdown]);
 
   const handleCopy = useCallback(() => {
-    if (btcAddress) {
-      navigator.clipboard.writeText(btcAddress);
-      onCopyAddress?.(btcAddress);
-    }
+    if (!btcAddress) return;
+    navigator.clipboard.writeText(btcAddress);
+    onCopyAddress?.(btcAddress);
   }, [btcAddress, onCopyAddress]);
 
-  const truncatedAddress = btcAddress
-    ? `${btcAddress.slice(0, 6)}...${btcAddress.slice(-6)}`
-    : '';
+  const truncatedAddress = btcAddress ? `${btcAddress.slice(0, 6)}...${btcAddress.slice(-6)}` : '';
   const expiresLabel = formatExpires(expiresAt);
   const lastAttemptLabel = lastAttemptAt
     ? new Date(lastAttemptAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
     : 'Never';
 
-  const statusPillClass =
-    status === 'MINING'
-      ? 'border-lotto-orange-400 text-lotto-orange-700 bg-lotto-orange-50'
-      : status === 'ACTIVE'
-        ? 'border-lotto-green-500 text-lotto-green-700 bg-lotto-green-50'
-        : 'border-gray-300 text-gray-600 bg-gray-50';
-
+  const statusCfg = STATUS_CONFIG[status];
   const canPlusUltra =
-    (status === 'ACTIVE' || status === 'MINING') &&
-    new Date(expiresAt) > new Date() &&
-    Boolean(onPlusUltra);
+    (status === 'ACTIVE' || status === 'MINING') && new Date(expiresAt) > new Date() && Boolean(onPlusUltra);
 
   return (
     <motion.div
@@ -141,59 +155,75 @@ export function LottoOrbCard({
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
       onClick={() => onOpenDetails?.(ticketId)}
-      className="relative cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+      className="relative cursor-pointer overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0d0d12] transition-colors hover:border-white/[0.13]"
     >
-      {/* Header */}
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Lotto</h3>
-        <span
-          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusPillClass}`}
-        >
-          {status}
-        </span>
-      </div>
+      {/* Subtle top glow based on status */}
+      {status === 'MINING' && (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(251,191,36,0.4), transparent)' }}
+        />
+      )}
+      {status === 'ACTIVE' && (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(34,197,94,0.3), transparent)' }}
+        />
+      )}
 
-      {/* Address */}
-      <div className="mb-4 flex items-center gap-2">
-        <span className="truncate font-mono text-xs text-gray-500" title={btcAddress}>
-          {truncatedAddress || 'No address'}
-        </span>
-        {btcAddress && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCopy();
-            }}
-            className="shrink-0 rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Copy address"
-          >
-            <Copy className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
-
-      {/* Main row: attempts + orb */}
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="text-xs text-gray-500">Total Attempts</div>
-          <div className="mt-0.5 max-h-14 overflow-y-auto font-mono text-sm font-semibold tabular-nums leading-tight text-gray-900">
-            {formatExact(attemptsTotal)}
-          </div>
-          {recentDelta > 0 && (
-            <div className="mt-0.5 text-xs font-medium tabular-nums text-lotto-green-600">
-              +{formatExact(recentDelta)}
-            </div>
+      {/* Header: status + address */}
+      <div className="flex items-center justify-between px-5 pt-5">
+        <div className="flex items-center gap-2">
+          {statusCfg.pulse ? (
+            <motion.span
+              className={`block h-1.5 w-1.5 rounded-full ${statusCfg.dot}`}
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          ) : (
+            <span className={`block h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
           )}
-          <div className="mt-0.5 text-xs text-gray-400">
-            {attemptsToday != null && attemptsToday > 0
-              ? `+${formatCompact(attemptsToday)} today`
-              : `Last: ${lastAttemptLabel}`}
-          </div>
+          <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-medium tracking-wide ${statusCfg.pill}`}>
+            {status}
+          </span>
         </div>
-        <div className="shrink-0">
+
+        <div className="flex items-center gap-1.5">
+          <span
+            className="font-mono text-[11px] text-white/30"
+            title={btcAddress}
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            {truncatedAddress || 'No address'}
+          </span>
+          {btcAddress && (
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                handleCopy();
+              }}
+              className="rounded p-0.5 text-white/20 transition-colors hover:text-white/50"
+              aria-label="Copy address"
+            >
+              <Copy className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Orb stage — focal element */}
+      <div className="flex justify-center py-5">
+        <div
+          className="flex items-center justify-center rounded-full"
+          style={{
+            width: 164,
+            height: 164,
+            background: 'radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)',
+          }}
+        >
           <LottoOrbCanvas
-            size={120}
+            size={148}
             params={orbParams}
             isMining={isMining}
             isPlusUltra={isPlusUltra}
@@ -202,65 +232,95 @@ export function LottoOrbCard({
         </div>
       </div>
 
+      {/* Attempts — centered beneath orb */}
+      <div className="px-5 pb-4 text-center">
+        <div
+          className="tabular-nums leading-tight text-white"
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 'clamp(1.35rem, 3vw, 1.6rem)',
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          {formatExact(attemptsTotal)}
+        </div>
+
+        <div className="mt-1 flex items-center justify-center gap-2">
+          <span className="text-[10px] uppercase tracking-[0.18em] text-white/20">Total Attempts</span>
+          {recentDelta > 0 && (
+            <motion.span
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-[10px] font-medium tabular-nums text-lotto-green-400"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              +{formatCompact(recentDelta)}
+            </motion.span>
+          )}
+        </div>
+
+        <div className="mt-0.5 text-[10px] text-white/20">
+          {attemptsToday != null && attemptsToday > 0
+            ? `+${formatCompact(attemptsToday)} today`
+            : `Last: ${lastAttemptLabel}`}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="mx-5 border-t border-white/[0.05]" />
+
       {/* Footer pills */}
-      <div className="mb-4 flex flex-wrap gap-2 text-xs">
-        <span className="rounded-md bg-gray-100 px-2 py-1 text-gray-600">
+      <div className="flex items-center gap-1.5 px-5 py-3">
+        <span className="rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[10px] text-white/35">
           Next: {formatCountdown(countdown)}
         </span>
-        <span className="rounded-md bg-gray-100 px-2 py-1 text-gray-600">Cycle: 10m</span>
-        <span className="rounded-md bg-gray-100 px-2 py-1 text-gray-600">Expires: {expiresLabel}</span>
+        <span className="rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[10px] text-white/35">
+          10m cycle
+        </span>
+        <span className="ml-auto rounded-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-1 text-[10px] text-white/35">
+          {expiresLabel}
+        </span>
       </div>
 
       {/* CTAs */}
-      <div className="flex flex-col gap-2">
-        {btcAddress ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenDetails?.(ticketId);
-            }}
-            className="flex w-full items-center justify-center gap-1 rounded-lg border border-gray-200 bg-gray-50 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-            aria-label="View ticket details"
-          >
-            View details
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenDetails?.(ticketId);
-            }}
-            className="flex w-full items-center justify-center gap-1 rounded-lg border border-amber-300 bg-amber-50 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
-          >
-            Set payout address
-          </button>
-        )}
+      <div className="flex flex-col gap-2 px-5 pb-5">
+        <button
+          type="button"
+          onClick={e => {
+            e.stopPropagation();
+            onOpenDetails?.(ticketId);
+          }}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm font-medium text-white/50 transition-colors hover:border-white/[0.14] hover:text-white/80"
+          aria-label="View ticket details"
+        >
+          View details
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
 
         {canPlusUltra && (
           <button
             type="button"
             disabled={isPlusUltraPending}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               onPlusUltra?.();
             }}
-            className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-all ${
+            className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition-all ${
               isPlusUltraPending
-                ? 'cursor-not-allowed bg-lotto-orange-400 opacity-60'
-                : 'bg-gradient-to-r from-lotto-orange-500 to-lotto-orange-600 hover:from-lotto-orange-600 hover:to-lotto-orange-700'
+                ? 'cursor-not-allowed bg-lotto-orange-500/40 opacity-60'
+                : 'bg-gradient-to-r from-lotto-orange-600 to-lotto-orange-500 hover:from-lotto-orange-500 hover:to-lotto-orange-400'
             }`}
           >
             {isPlusUltraPending ? (
               <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 Mining...
               </>
             ) : (
               <>
-                <Zap className="h-4 w-4" />
+                <Zap className="h-3.5 w-3.5" />
                 Plus Ultra
               </>
             )}

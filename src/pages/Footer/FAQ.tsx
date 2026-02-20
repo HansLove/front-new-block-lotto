@@ -36,27 +36,26 @@ export default function FAQ() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F1B] px-6 py-12 text-white">
-      <div className="flex justify-around border-b border-gray-700">
+    <div className="min-h-screen bg-surface-base px-6 py-12 text-white">
+      <div className="flex justify-around border-b border-white/[0.07]">
         <a href="/" className="-m-1.5 p-1.5">
           <span className="sr-only">Block Lotto</span>
-          <img id="logo-light" className="h-12 w-auto" src="/images/logo.png" alt="Block Lotto" />
-          <img id="logo-dark" className="h-12 w-auto" src="/images/logo-light.png" alt="Block Lotto" />
+          <img className="h-12 w-auto" src="/images/logo-light.png" alt="Block Lotto" />
         </a>
-        <h1 className="mb-8 pb-4 text-4xl font-bold">Frequently Asked Questions ❓</h1>
+        <h1 className="mb-8 pb-4 text-4xl font-bold">Frequently Asked Questions</h1>
       </div>
 
       <div className="mx-auto max-w-3xl space-y-6 py-5">
         {faqData.map((item, index) => (
-          <div key={index} className="rounded-xl border border-gray-700">
+          <div key={index} className="rounded-xl border border-white/10">
             <button
               onClick={() => toggle(index)}
-              className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-[#1C1C2E]"
+              className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-white/[0.04]"
             >
               <span className="text-lg font-semibold">{item.question}</span>
-              <span className="text-xl text-gray-400">{openIndex === index ? '−' : '+'}</span>
+              <span className="text-xl text-white/25">{openIndex === index ? '−' : '+'}</span>
             </button>
-            {openIndex === index && <div className="px-6 pb-4 text-gray-300">{item.answer}</div>}
+            {openIndex === index && <div className="px-6 pb-4 text-white/35">{item.answer}</div>}
           </div>
         ))}
       </div>

@@ -21,7 +21,7 @@ function LandingPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-white pt-16">
+      <div className="min-h-screen bg-[#07070a] pt-16">
         <Hero />
         <LoginModal />
       </div>

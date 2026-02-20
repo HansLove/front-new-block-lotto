@@ -17,22 +17,22 @@ export const Footer = () => {
   const [displayContactModal, setDisplayContactModal] = useState(false);
 
   return (
-    <footer className="relative overflow-hidden border-t border-gray-200 bg-white">
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-12 pb-8 sm:px-6 lg:px-8">
+    <footer className="relative overflow-hidden border-t border-white/[0.05] bg-[#07070a]">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {/* Brand */}
           <div>
-            <a href="/" aria-label="Go home" title="Block Lotto" className="mb-4 inline-flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-lotto-blue-500 text-xl font-bold text-white">
+            <a href="/" aria-label="Go home" title="Block Lotto" className="mb-4 inline-flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-lotto-blue-500 text-lg font-bold text-white">
                 B
               </div>
-              <span className="text-xl font-bold text-gray-900">Block-Lotto</span>
+              <span className="text-lg font-semibold text-white">Block-Lotto</span>
             </a>
-            <p className="mb-4 max-w-sm text-sm leading-relaxed text-gray-600">
+            <p className="mb-5 max-w-sm text-sm leading-relaxed text-white/35">
               The first transparent, high-frequency lottery system active on the blockchain. Decentralized luck, powered
               by math.
             </p>
-            <div className="inline-flex items-center gap-2 rounded-full border border-lotto-green-200 bg-lotto-green-50 px-3 py-1.5 text-xs font-medium text-lotto-green-700">
+            <div className="inline-flex items-center gap-2 rounded-full border border-lotto-green-500/20 bg-lotto-green-500/10 px-3 py-1.5 text-xs font-medium text-lotto-green-400">
               <BoltIcon className="h-3.5 w-3.5" />
               Transparent & Fair
             </div>
@@ -40,35 +40,27 @@ export const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">Quick Links</h3>
+            <h3 className="mb-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">Quick Links</h3>
             <ul className="space-y-3">
-              <li>
-                <a href="/lotto" className="text-gray-600 transition-colors hover:text-lotto-green-600">
-                  Dashboard
-                </a>
-              </li>
-              <li>
-                <a href="#how-it-works" className="text-gray-600 transition-colors hover:text-lotto-green-600">
-                  How it works
-                </a>
-              </li>
-              <li>
-                <a href="#transparency" className="text-gray-600 transition-colors hover:text-lotto-green-600">
-                  Transparency
-                </a>
-              </li>
-              <li>
-                <a href="/FAQ" className="text-gray-600 transition-colors hover:text-lotto-green-600">
-                  FAQ
-                </a>
-              </li>
+              {[
+                { label: 'Dashboard', href: '/lotto' },
+                { label: 'How it works', href: '#how-it-works' },
+                { label: 'Transparency', href: '#transparency' },
+                { label: 'FAQ', href: '/FAQ' },
+              ].map(link => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-white/40 transition-colors hover:text-white/70">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Get in Touch */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">Get in Touch</h3>
-            <div className="space-y-3">
+            <h3 className="mb-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">Get in Touch</h3>
+            <div className="space-y-2.5">
               <button
                 onClick={() => setDisplayContactModal(true)}
                 className="flex w-full items-center gap-2 rounded-lg bg-lotto-green-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-lotto-green-600"
@@ -80,14 +72,14 @@ export const Footer = () => {
                 href="https://wa.me/525580088161"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex w-full items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-lotto-green-300 hover:bg-lotto-green-50 hover:text-lotto-green-700"
+                className="flex w-full items-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-white/50 transition-colors hover:border-white/20 hover:text-white/80"
               >
                 <ChatBubbleLeftRightIcon className="h-4 w-4" />
                 WhatsApp
               </a>
               <a
                 href="tel:+525580088161"
-                className="flex w-full items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-lotto-green-300 hover:bg-lotto-green-50 hover:text-lotto-green-700"
+                className="flex w-full items-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-white/50 transition-colors hover:border-white/20 hover:text-white/80"
               >
                 <PhoneIcon className="h-4 w-4" />
                 +52 558 008 8161
@@ -96,7 +88,7 @@ export const Footer = () => {
                 href="https://instagram.com/aarontolentinot"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex w-full items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:border-lotto-green-300 hover:bg-lotto-green-50 hover:text-lotto-green-700"
+                className="flex w-full items-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-white/50 transition-colors hover:border-white/20 hover:text-white/80"
               >
                 <InstagramIcon className="h-4 w-4" />
                 Instagram
@@ -105,7 +97,7 @@ export const Footer = () => {
                 href="https://caosenterprises.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 inline-block text-sm text-gray-500 transition-colors hover:text-lotto-green-600"
+                className="mt-2 inline-block text-sm text-white/30 transition-colors hover:text-white/60"
               >
                 Caos Enterprises →
               </a>
@@ -115,35 +107,31 @@ export const Footer = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row">
-          <p className="text-center text-sm text-gray-500 sm:text-left">
-            Block Lotto © 2025. Powered by{' '}
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/[0.05] pt-8 sm:flex-row">
+          <p className="text-center text-xs text-white/25 sm:text-left">
+            Block Lotto &copy; 2025. Powered by{' '}
             <a
               href="https://caosenterprises.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-lotto-green-600 transition-colors hover:text-lotto-green-700"
+              className="text-white/40 transition-colors hover:text-white/70"
             >
               Caos Enterprises
             </a>
             .
           </p>
           <ul className="flex flex-wrap justify-center gap-6 sm:gap-8">
-            <li>
-              <a href="/FAQ" className="text-sm text-gray-600 transition-colors hover:text-lotto-green-600">
-                FAQ
-              </a>
-            </li>
-            <li>
-              <a href="/PrivacyPolicy" className="text-sm text-gray-600 transition-colors hover:text-lotto-green-600">
-                Privacy Policy
-              </a>
-            </li>
-            <li>
-              <a href="/TermsAndConditions" className="text-sm text-gray-600 transition-colors hover:text-lotto-green-600">
-                Terms & Conditions
-              </a>
-            </li>
+            {[
+              { label: 'FAQ', href: '/FAQ' },
+              { label: 'Privacy Policy', href: '/PrivacyPolicy' },
+              { label: 'Terms & Conditions', href: '/TermsAndConditions' },
+            ].map(link => (
+              <li key={link.label}>
+                <a href={link.href} className="text-xs text-white/25 transition-colors hover:text-white/60">
+                  {link.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
       </div>

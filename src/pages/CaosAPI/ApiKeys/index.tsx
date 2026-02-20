@@ -69,14 +69,12 @@ export default function ApiKeys() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br py-8">
+    <div className="min-h-screen bg-surface-base py-8">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="mb-3 bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-4xl font-bold text-transparent">
-            API Keys
-          </h1>
-          <p className="text-lg text-slate-400">Manage your API keys and credits to integrate with our services</p>
+          <h1 className="mb-3 text-4xl font-bold text-white">API Keys</h1>
+          <p className="text-lg text-white/35">Manage your API keys and credits to integrate with our services</p>
         </div>
 
         <DepositModal
@@ -94,13 +92,13 @@ export default function ApiKeys() {
 
         {/* Mensajes de estado */}
         {error && (
-          <div className="mb-6 rounded-xl border border-red-600 bg-red-900/20 p-4 backdrop-blur-sm">
+          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
             <p className="text-red-400">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="mb-6 rounded-xl border border-green-600 bg-green-900/20 p-4 backdrop-blur-sm">
+          <div className="mb-6 rounded-xl border border-lotto-green-500/30 bg-lotto-green-500/10 p-4">
             <p className="text-green-400">{success}</p>
           </div>
         )}

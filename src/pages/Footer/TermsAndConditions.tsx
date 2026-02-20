@@ -1,15 +1,14 @@
 export default function TermsAndConditions() {
   return (
-    <div className="min-h-screen bg-[#0F0F1B] px-6 py-12 text-white">
-      <div className="flex justify-around border-b border-gray-700">
+    <div className="min-h-screen bg-surface-base px-6 py-12 text-white">
+      <div className="flex justify-around border-b border-white/[0.07]">
         <a href="/" className="-m-1.5 p-1.5">
           <span className="sr-only">Block Lotto</span>
-          <img id="logo-light" className="h-12 w-auto" src="/images/logo.png" alt="Block Lotto" />
-          <img id="logo-dark" className="h-12 w-auto" src="/images/logo-light.png" alt="Block Lotto" />
+          <img className="h-12 w-auto" src="/images/logo-light.png" alt="Block Lotto" />
         </a>
-        <h1 className="mb-6 flex items-center gap-3 pb-4 text-4xl font-bold">📜 Terms and Conditions</h1>
+        <h1 className="mb-6 flex items-center gap-3 pb-4 text-4xl font-bold">Terms and Conditions</h1>
       </div>
-      <div className="mx-auto max-w-4xl space-y-8 pt-5 text-lg leading-relaxed text-gray-300">
+      <div className="mx-auto max-w-4xl space-y-8 pt-5 text-lg leading-relaxed text-white/35">
         <p>
           These Terms and Conditions govern your use of the CaosEngine platform, operated by Caos Enterprises. By
           accessing or using any part of this site, you agree to be bound by these terms.
@@ -69,7 +68,7 @@ export default function TermsAndConditions() {
           <p>
             CaosEngine does not collect personal information unless explicitly provided by the user. All entropy or
             randomness inputs are anonymized and processed without persistent user tracking. Please review our{' '}
-            <a href="/PrivacyPolicy" className="text-blue-400 hover:underline">
+            <a href="/PrivacyPolicy" className="text-action-primary hover:underline">
               Privacy Policy
             </a>{' '}
             for full details.
@@ -92,7 +91,7 @@ export default function TermsAndConditions() {
           </p>
         </section>
 
-        <p className="mt-10 text-sm text-gray-500">Last updated: June 16, 2025.</p>
+        <p className="mt-10 text-sm text-white/25">Last updated: June 16, 2025.</p>
       </div>
     </div>
   );
