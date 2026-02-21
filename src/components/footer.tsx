@@ -118,6 +118,24 @@ export const Footer = () => {
             >
               Caos Enterprises
             </a>
+            . Energy by{' '}
+            <a
+              href="https://spoon.energy/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/30 transition-colors hover:text-white/50"
+            >
+              Spoon
+            </a>
+            {' · '}
+            <a
+              href="https://caosengine.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/30 transition-colors hover:text-white/50"
+            >
+              Caos Engine
+            </a>
             .
           </p>
           <ul className="flex flex-wrap justify-center gap-6 sm:gap-8">
@@ -133,6 +151,21 @@ export const Footer = () => {
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* Founder quote */}
+        <div className="mt-8 border-t border-white/[0.05] pt-6 text-center">
+          <p className="text-xs italic leading-relaxed text-white/25">
+            &ldquo;Block by block, step by step—there is no bad attempt.&rdquo; —{' '}
+            <a
+              href="https://aarontolentino.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/40 transition-colors hover:text-white/60"
+            >
+              Aaron Tolentino
+            </a>
+          </p>
         </div>
       </div>
     </footer>

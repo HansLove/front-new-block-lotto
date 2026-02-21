@@ -1,7 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 import type { OrbParams } from './orbMath';
+
+const DEFAULT_CORE = 0x0d9488;
+const DEFAULT_RIM = 0x2dd4bf;
+const DEFAULT_SHELL = 0x5eead4;
+
+function parseAccentColor(hex: string | undefined): { core: number; rim: number; shell: number } {
+  if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+    return { core: DEFAULT_CORE, rim: DEFAULT_RIM, shell: DEFAULT_SHELL };
+  }
+  const core = new THREE.Color(hex).getHex();
+  const rim = new THREE.Color(hex).clone().lerp(new THREE.Color(0xffffff), 0.25).getHex();
+  const shell = new THREE.Color(hex).clone().lerp(new THREE.Color(0xffffff), 0.45).getHex();
+  return { core, rim, shell };
+}
 
 export interface LottoOrbCanvasProps {
   /** Size in px (width and height). */
@@ -11,6 +25,8 @@ export interface LottoOrbCanvasProps {
   isPlusUltra?: boolean;
   /** When true, component is in viewport (IntersectionObserver). */
   visible?: boolean;
+  /** Optional hex color for orb (core/rim/shells); derived from ticketId when set. */
+  accentColor?: string;
 }
 
 export function LottoOrbCanvas({
@@ -19,6 +35,7 @@ export function LottoOrbCanvas({
   isMining = false,
   isPlusUltra = false,
   visible = true,
+  accentColor,
 }: LottoOrbCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [useFallback, setUseFallback] = useState(false);
@@ -29,6 +46,8 @@ export function LottoOrbCanvas({
   paramsRef.current = params;
   isMiningRef.current = isMining;
   isPlusUltraRef.current = isPlusUltra;
+
+  const colors = useMemo(() => parseAccentColor(accentColor), [accentColor]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -64,18 +83,18 @@ export function LottoOrbCanvas({
 
       const coreGeom = new THREE.SphereGeometry(0.5, 32, 24);
       const coreMat = new THREE.MeshStandardMaterial({
-        color: 0x0d9488,
-        emissive: 0x0d9488,
+        color: colors.core,
+        emissive: colors.core,
         emissiveIntensity: 0.35,
-        metalness: 0.1,
-        roughness: 0.5,
+        metalness: params.metalness,
+        roughness: params.roughness,
       });
       meshCore = new THREE.Mesh(coreGeom, coreMat);
       scene.add(meshCore);
 
       const rimGeom = new THREE.SphereGeometry(0.52, 32, 24);
       const rimMat = new THREE.MeshBasicMaterial({
-        color: 0x2dd4bf,
+        color: colors.rim,
         transparent: true,
         opacity: 0.4,
         side: THREE.BackSide,
@@ -87,7 +106,7 @@ export function LottoOrbCanvas({
         const r = 0.54 + i * 0.04;
         const shellGeom = new THREE.SphereGeometry(r, 24, 16);
         const shellMat = new THREE.MeshBasicMaterial({
-          color: 0x5eead4,
+          color: colors.shell,
           transparent: true,
           opacity: 0.12,
           side: THREE.BackSide,
@@ -125,7 +144,10 @@ export function LottoOrbCanvas({
       const intensity = p.intensity;
       const baseEmissive = 0.35 + intensity * 0.35;
       const pulseEmissive = 0.2 * pulse + (mining ? pulse * 0.2 : 0) + (plusUltra ? pulse * 0.35 : 0);
-      (meshCore.material as THREE.MeshStandardMaterial).emissiveIntensity = Math.min(1, baseEmissive + pulseEmissive);
+      const coreMat = meshCore.material as THREE.MeshStandardMaterial;
+      coreMat.emissiveIntensity = Math.min(1, baseEmissive + pulseEmissive);
+      coreMat.metalness = p.metalness;
+      coreMat.roughness = p.roughness;
 
       const rimOpacity = 0.35 + intensity * 0.2 + 0.25 * pulse + (plusUltra ? pulse * 0.2 : 0);
       (meshRim.material as THREE.MeshBasicMaterial).opacity = Math.min(0.7, rimOpacity);
@@ -143,9 +165,9 @@ export function LottoOrbCanvas({
         meshHalo.rotation.z += 0.03;
       }
 
-      const wobble = p.noise * Math.sin(t * 1.2);
-      meshCore.scale.setScalar(1 + wobble);
-      meshRim.scale.setScalar(1 + wobble);
+      const wobbleAmount = p.wobble * Math.sin(t * 1.2);
+      meshCore.scale.setScalar(1 + wobbleAmount);
+      meshRim.scale.setScalar(1 + wobbleAmount);
       const rotSpeed = plusUltra ? 0.022 : mining ? 0.014 : 0.01;
       meshCore.rotation.y += rotSpeed;
       meshRim.rotation.y = meshCore.rotation.y;
@@ -174,7 +196,10 @@ export function LottoOrbCanvas({
       meshRim.geometry.dispose();
       (meshRim.material as THREE.Material).dispose();
     };
-  }, [size, useFallback, visible, isMining, isPlusUltra]);
+  }, [size, useFallback, visible, isMining, isPlusUltra, accentColor, colors]);
+
+  const fallbackStroke = accentColor && /^#[0-9A-Fa-f]{6}$/.test(accentColor) ? accentColor : '#14b8a6';
+  const fallbackFill = accentColor && /^#[0-9A-Fa-f]{6}$/.test(accentColor) ? accentColor : '#0d9488';
 
   if (useFallback) {
     return (
@@ -200,7 +225,7 @@ export function LottoOrbCanvas({
                 rx={r}
                 ry={r * 0.9}
                 fill="none"
-                stroke="#14b8a6"
+                stroke={fallbackStroke}
                 strokeWidth={0.04}
                 opacity={opacity}
               />
@@ -211,7 +236,7 @@ export function LottoOrbCanvas({
             cy="0"
             rx="0.45"
             ry="0.4"
-            fill="#0d9488"
+            fill={fallbackFill}
             opacity={0.3 + params.intensity * 0.4}
           />
           {isPlusUltra && (

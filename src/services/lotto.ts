@@ -33,6 +33,8 @@ export interface LottoAttempt {
   bits: string | null;
   timestamp: number | null;
   attemptedAt: string;
+  /** HIGH = Bitcoin-powered mining attempt, LOW = standard */
+  energyType?: 'HIGH' | 'LOW';
 }
 
 export interface SystemStats {
@@ -67,12 +69,14 @@ function mapInstanceToLottoTicket(row: Record<string, unknown>): LottoTicket {
 
 function mapEventToLottoAttempt(row: Record<string, unknown>): LottoAttempt {
   const energyType = row.energy_type as string | undefined;
+  const normalizedEnergy: 'HIGH' | 'LOW' =
+    energyType === 'HIGH' ? 'HIGH' : 'LOW';
   return {
     id: String(row.id),
     blockHeight: Number(row.block_height ?? row.blockHeight ?? 0),
     hash: String(row.tip_hash ?? row.hash ?? ''),
     nonce: String(row.nonce ?? ''),
-    stars: energyType === 'HIGH' ? 5 : 3,
+    stars: normalizedEnergy === 'HIGH' ? 5 : 3,
     isBlock: false,
     blockHash: null,
     merkleRoot: null,
@@ -80,6 +84,7 @@ function mapEventToLottoAttempt(row: Record<string, unknown>): LottoAttempt {
     bits: null,
     timestamp: null,
     attemptedAt: String(row.created_at ?? row.attemptedAt ?? ''),
+    energyType: normalizedEnergy,
   };
 }
 

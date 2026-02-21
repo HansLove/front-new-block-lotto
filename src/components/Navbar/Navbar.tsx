@@ -16,11 +16,6 @@ const Navbar = () => {
     navigate('/');
   };
 
-  const handleNewLotto = () => {
-    if (isSessionActive) navigate('/lotto');
-    else openLoginModal();
-  };
-
   return (
     <>
       <header className="fixed top-0 z-50 w-full border-b border-white/[0.07] bg-[#07070a]/90 backdrop-blur-sm">
@@ -52,12 +47,12 @@ const Navbar = () => {
 
           {/* Desktop CTAs */}
           <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-3">
-            <button
+            {/* <button
               onClick={handleNewLotto}
               className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-amber-400"
             >
               + New Lotto
-            </button>
+            </button> */}
             <button
               onClick={() => (isSessionActive ? navigate('/lotto') : openLoginModal())}
               className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/70 transition-colors hover:border-white/30 hover:text-white"
@@ -118,7 +113,7 @@ const Navbar = () => {
                 <div className="mt-6 flow-root px-4">
                   <div className="-my-6 divide-y divide-white/[0.07]">
                     <div className="space-y-3 py-6">
-                      <button
+                      {/* <button
                         onClick={() => {
                           setMobileMenuOpen(false);
                           handleNewLotto();
@@ -126,7 +121,7 @@ const Navbar = () => {
                         className="w-full rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-amber-400"
                       >
                         + New Lotto
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => {
                           setMobileMenuOpen(false);

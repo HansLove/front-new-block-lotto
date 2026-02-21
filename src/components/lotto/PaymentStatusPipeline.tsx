@@ -156,6 +156,11 @@ export function PaymentStatusPipeline({ status }: PaymentStatusPipelineProps) {
           <p className="text-[11px] text-white/40" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
             {STATUS_MESSAGES[status]}
           </p>
+          {(status === 'waiting' || status === 'confirming') && (
+            <p className="mt-1 text-[10px] text-white/30" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              Typically 2–5 minutes.
+            </p>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

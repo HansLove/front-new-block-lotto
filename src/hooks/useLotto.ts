@@ -189,7 +189,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     };
   }, []);
 
-  // Load initial data
+  // Load initial data (with loading state)
   const loadTickets = useCallback(async () => {
     try {
       setLoading(true);
@@ -205,9 +205,65 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     }
   }, []);
 
+  // Silent refresh: update data in background without loading spinner (smooth, no reload)
+  const lastSilentRefreshRef = useRef<number>(0);
+  const REFRESH_THROTTLE_MS = 5000; // min 5s between silent refreshes
+
+  const refreshSilent = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastSilentRefreshRef.current < REFRESH_THROTTLE_MS) return;
+    lastSilentRefreshRef.current = now;
+    try {
+      const [ticketsData, statsData] = await Promise.all([fetchUserTickets(), fetchSystemStats()]);
+      setTickets(ticketsData);
+      setStats(statsData.stats);
+    } catch (err: any) {
+      console.error('[useLotto] Silent refresh failed:', err);
+    }
+  }, []);
+
   useEffect(() => {
     loadTickets();
   }, [loadTickets]);
+
+  // Auto-refresh when user returns to tab (visibility) or on a gentle interval while visible — no reload, no spinner
+  useEffect(() => {
+    const INTERVAL_MS = 45000; // 45s when tab is visible
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let visibilityTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const clearIntervalAndTimeout = () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+      if (visibilityTimeoutId) {
+        clearTimeout(visibilityTimeoutId);
+        visibilityTimeoutId = null;
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        visibilityTimeoutId = setTimeout(() => {
+          visibilityTimeoutId = null;
+          refreshSilent();
+        }, 400);
+        if (!intervalId) intervalId = setInterval(refreshSilent, INTERVAL_MS);
+      } else {
+        clearIntervalAndTimeout();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    if (document.visibilityState === 'visible') {
+      intervalId = setInterval(refreshSilent, INTERVAL_MS);
+    }
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      clearIntervalAndTimeout();
+    };
+  }, [refreshSilent]);
 
   const refreshTickets = useCallback(() => {
     return loadTickets();

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { formatCompact, formatExact } from './formatAttempts';
 import { LottoOrbCanvas } from './LottoOrbCanvas';
-import { getOrbParams } from './orbMath';
+import { getOrbParams, getOrbSizeFromAttempts } from './orbMath';
+import { ticketIdToHex } from './ticketIdToColor';
 
 export type LottoOrbCardStatus = 'ACTIVE' | 'EXPIRED' | 'PAUSED' | 'CANCELLED' | 'MINING';
 
@@ -108,7 +109,10 @@ export function LottoOrbCard({
     return () => clearTimeout(t);
   }, [recentDelta]);
 
+  const plusUltraAvailable = import.meta.env.VITE_PLUS_ULTRA_AVAILABLE !== '0';
   const orbParams = useMemo(() => getOrbParams(attemptsTotal, isPlusUltra), [attemptsTotal, isPlusUltra]);
+  const accentColor = useMemo(() => ticketIdToHex(ticketId), [ticketId]);
+  const orbSize = useMemo(() => getOrbSizeFromAttempts(attemptsTotal), [attemptsTotal]);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -147,15 +151,17 @@ export function LottoOrbCard({
 
   const statusCfg = STATUS_CONFIG[status];
   const canPlusUltra =
-    (status === 'ACTIVE' || status === 'MINING') && new Date(expiresAt) > new Date() && Boolean(onPlusUltra);
+    plusUltraAvailable &&
+    (status === 'ACTIVE' || status === 'MINING') &&
+    new Date(expiresAt) > new Date() &&
+    Boolean(onPlusUltra);
 
   return (
     <motion.div
       ref={cardRef}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
-      onClick={() => onOpenDetails?.(ticketId)}
-      className="relative cursor-pointer overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0d0d12] transition-colors hover:border-white/[0.13]"
+      className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0d0d12] transition-colors hover:border-white/[0.13]"
     >
       {/* Subtle top glow based on status */}
       {status === 'MINING' && (
@@ -223,11 +229,12 @@ export function LottoOrbCard({
           }}
         >
           <LottoOrbCanvas
-            size={148}
+            size={orbSize}
             params={orbParams}
             isMining={isMining}
             isPlusUltra={isPlusUltra}
             visible={visible}
+            accentColor={accentColor}
           />
         </div>
       </div>
@@ -288,14 +295,11 @@ export function LottoOrbCard({
       <div className="flex flex-col gap-2 px-5 pb-5">
         <button
           type="button"
-          onClick={e => {
-            e.stopPropagation();
-            onOpenDetails?.(ticketId);
-          }}
+          onClick={() => onOpenDetails?.(ticketId)}
           className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2.5 text-sm font-medium text-white/50 transition-colors hover:border-white/[0.14] hover:text-white/80"
-          aria-label="View ticket details"
+          aria-label="See more ticket details"
         >
-          View details
+          See more
           <ChevronRight className="h-3.5 w-3.5" />
         </button>
 

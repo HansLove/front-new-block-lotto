@@ -17,6 +17,10 @@ export interface OrbParams {
   noise: number;
   pulseSpeed: number;
   scale: number;
+  /** Wobble amount for scale animation: higher = more gelatin, lower = more solid. */
+  wobble: number;
+  metalness: number;
+  roughness: number;
 }
 
 /**
@@ -35,13 +39,20 @@ export function getOrbParams(attemptsTotal: number, isPlusUltra?: boolean): OrbP
   // shells: 1 + floor((scale - 3) / 2), clamped 1..5
   const shells = clamp(1 + Math.floor((scale - 3) / 2), 1, 5);
 
-  // subtle noise for wobble
+  // subtle noise for shell variation
   const noise = 0.02 + intensity * 0.03;
+
+  // wobble: invert vs intensity — fewer attempts = more gelatin, more attempts = more solid
+  const wobble = 0.06 - intensity * 0.04;
+
+  // material: more attempts = more steel (metalness up, roughness down)
+  const metalness = 0.1 + intensity * 0.5;
+  const roughness = 0.5 - intensity * 0.2;
 
   // pulse: faster when Plus Ultra
   const pulseSpeed = isPlusUltra ? 2.5 : 1;
 
-  return { intensity, shells, noise, pulseSpeed, scale };
+  return { intensity, shells, noise, pulseSpeed, scale, wobble, metalness, roughness };
 }
 
 /**
@@ -59,5 +70,21 @@ export function lerpOrbParams(
     noise: from.noise + (to.noise - from.noise) * tClamp,
     pulseSpeed: from.pulseSpeed + (to.pulseSpeed - from.pulseSpeed) * tClamp,
     scale: from.scale + (to.scale - from.scale) * tClamp,
+    wobble: from.wobble + (to.wobble - from.wobble) * tClamp,
+    metalness: from.metalness + (to.metalness - from.metalness) * tClamp,
+    roughness: from.roughness + (to.roughness - from.roughness) * tClamp,
   };
+}
+
+const ORB_SIZE_MIN = 100;
+const ORB_SIZE_MAX = 164;
+
+/**
+ * Orb pixel size from total attempts (log scale). More attempts = bigger orb, growth tapers off.
+ */
+export function getOrbSizeFromAttempts(attemptsTotal: number): number {
+  const raw = Math.max(0, attemptsTotal);
+  const scale = Math.log10(raw + 1);
+  const factor = clamp01((scale - 1) / 10);
+  return Math.round(ORB_SIZE_MIN + (ORB_SIZE_MAX - ORB_SIZE_MIN) * factor);
 }
