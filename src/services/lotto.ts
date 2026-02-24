@@ -58,7 +58,7 @@ function mapInstanceToLottoTicket(row: Record<string, unknown>): LottoTicket {
     ticketId: String(row.ticketId ?? row.id),
     btcAddress: String(row.btcAddress ?? row.btc_address ?? ''),
     status: (row.status as LottoTicket['status']) ?? 'active',
-    validUntil: row.validUntil != null ? String(row.validUntil) : '',
+    validUntil: (row.validUntil ?? row.expires_at) != null ? String(row.validUntil ?? row.expires_at) : '',
     frequencyMinutes: Number(row.frequencyMinutes ?? 10),
     stars: Number(row.stars ?? 3),
     nonceTotal: Number(row.nonce_total ?? row.nonceTotal ?? 0),
@@ -176,3 +176,18 @@ export const requestInstanceHighMode = async (
   return response.data;
 };
 
+/**
+ * Redeem a promo code for a free 7-day ticket with 1 Plus Ultra.
+ * Requires code and Bitcoin address.
+ */
+export const redeemPromoCode = async (
+  code: string,
+  btcAddress: string
+): Promise<LottoTicket> => {
+  const response = await axios.post(
+    `${API_URL}promo/redeem`,
+    { code: code.trim(), btc_address: btcAddress.trim() },
+    getAuthHeaders()
+  );
+  return mapInstanceToLottoTicket(response.data);
+};
