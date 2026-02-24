@@ -64,6 +64,8 @@ interface UseLottoReturn {
   refreshTickets: () => Promise<void>;
   /** Refresh tickets in background without loading spinner; preserves card order. */
   refreshTicketsSilent: () => Promise<void>;
+  /** Add a ticket to the list (e.g. after redeeming a promo code) so it appears immediately. */
+  addTicket: (ticket: LottoTicket) => void;
   getTicketDetail: (ticketId: string) => Promise<LottoTicket | null>;
   getTicketAttempts: (
     ticketId: string,
@@ -253,6 +255,13 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     }
   }, [mergeTicketsPreservingOrder]);
 
+  const addTicket = useCallback((ticket: LottoTicket) => {
+    setTickets(prev => {
+      if (prev.some(t => t.id === ticket.id)) return prev;
+      return [...prev, ticket];
+    });
+  }, []);
+
   useEffect(() => {
     loadTickets();
   }, [loadTickets]);
@@ -350,6 +359,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     error,
     refreshTickets,
     refreshTicketsSilent,
+    addTicket,
     getTicketDetail,
     getTicketAttempts,
     requestHighEntropyAttempt,

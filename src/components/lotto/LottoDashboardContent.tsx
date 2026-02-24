@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Activity, Clock, Plus, Trophy, Zap } from 'lucide-react';
+import { useMemo } from 'react';
 
 import { formatExact } from '@/components/lotto/formatAttempts';
 import { LottoOrbCard, type LottoOrbCardStatus } from '@/components/lotto/LottoOrbCard';
@@ -65,6 +66,13 @@ export function LottoDashboardContent({
   const activeTickets = tickets.filter(
     t => t.status === 'active' && new Date(t.validUntil) > new Date()
   );
+  const sortedActiveTickets = useMemo(
+    () =>
+      [...activeTickets].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [activeTickets]
+  );
   const myTotalAttempts = activeTickets.reduce(
     (sum, t) => sum + (t.nonceTotal ?? t.totalAttempts ?? 0),
     0
@@ -81,8 +89,8 @@ export function LottoDashboardContent({
           <div className="grid grid-cols-2 divide-x divide-white/[0.04] sm:grid-cols-4">
             {[
               {
-                label: 'Active Tickets',
-                value: stats?.totalActiveTickets?.toLocaleString() ?? '--',
+                label: 'Your Tickets',
+                value: String(activeTickets.length),
                 icon: Activity,
                 mono: false,
               },
@@ -167,7 +175,7 @@ export function LottoDashboardContent({
             </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {showPaymentSkeleton && <PaymentTicketSkeleton />}
-              {activeTickets.map(ticket => {
+              {sortedActiveTickets.map(ticket => {
                 const pending = highEntropyPending[ticket.id] ?? false;
                 const orbProps = ticketToOrbProps(ticket, pending);
                 return (

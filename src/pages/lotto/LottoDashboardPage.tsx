@@ -1,7 +1,7 @@
 import 'react-toastify/dist/ReactToastify.css';
 
-import { motion } from 'framer-motion';
-import { Info, Plus } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Info, Plus, Ticket } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
@@ -14,6 +14,8 @@ import { useAuth } from '@/hooks/useLogInHook';
 import { useLotto } from '@/hooks/useLotto';
 import { useLottoDeposit } from '@/hooks/useLottoDeposit';
 import type { LottoTicket } from '@/services/lotto';
+import { redeemPromoCode } from '@/services/lotto';
+import { isValidBitcoinAddress } from '@/utils/bitcoinAddress';
 
 function useLottoDisplayFonts() {
   useEffect(() => {
@@ -33,7 +35,12 @@ export default function LottoDashboardPage() {
   const navigate = useNavigate();
   const { isSessionActive, openLoginModal } = useAuth();
   const [showBuyModal, setShowBuyModal] = useState(false);
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<PaymentLifecycleStatus>('idle');
+  const [redeemCodeValue, setRedeemCodeValue] = useState('');
+  const [redeemBtcAddress, setRedeemBtcAddress] = useState('');
+  const [redeemSubmitting, setRedeemSubmitting] = useState(false);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
 
   const {
     btcAddress,
@@ -52,7 +59,7 @@ export default function LottoDashboardPage() {
   const orderIdRef = useRef(orderId);
   orderIdRef.current = orderId;
 
-  const { tickets, stats, loading, refreshTickets, refreshTicketsSilent, requestHighEntropyAttempt, highEntropyPending } = useLotto({
+  const { tickets, stats, loading, refreshTickets, refreshTicketsSilent, addTicket, requestHighEntropyAttempt, highEntropyPending } = useLotto({
     onPaymentLifecycle: useCallback((event: { orderId: string; status: 'waiting' | 'confirming' }) => {
       if (event.orderId !== orderIdRef.current) return;
       setPaymentStatus(event.status);
@@ -124,6 +131,43 @@ export default function LottoDashboardPage() {
     setPaymentStatus('idle');
     resetPayment();
     setShowBuyModal(false);
+  };
+
+  const handleRedeemSubmit = async () => {
+    const code = redeemCodeValue.trim();
+    const btc = redeemBtcAddress.trim();
+    setRedeemError(null);
+    if (!code) {
+      setRedeemError('Enter your promo code');
+      return;
+    }
+    if (!btc) {
+      setRedeemError('Enter your Bitcoin address');
+      return;
+    }
+    if (!isValidBitcoinAddress(btc)) {
+      setRedeemError('Invalid Bitcoin address. Use legacy (1...), P2SH (3...), or SegWit (bc1q...).');
+      return;
+    }
+    setRedeemSubmitting(true);
+    try {
+      const newTicket = await redeemPromoCode(code, btc);
+      addTicket(newTicket);
+      toast.success('Promo code redeemed! Your 7-day ticket is active.', { position: 'bottom-center' });
+      setRedeemCodeValue('');
+      setRedeemBtcAddress('');
+      setRedeemError(null);
+      setShowRedeemModal(false);
+      await refreshTicketsSilent();
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && err !== null && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : null;
+      setRedeemError(msg ?? (err instanceof Error ? err.message : 'Failed to redeem code'));
+    } finally {
+      setRedeemSubmitting(false);
+    }
   };
 
   const handleForceClose = () => {
@@ -212,15 +256,26 @@ export default function LottoDashboardPage() {
                 </div>
               </div>
 
-              <motion.button
-                onClick={() => setShowBuyModal(true)}
-                className="flex shrink-0 items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-amber-400"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Plus className="h-4 w-4" />
-                New Ticket
-              </motion.button>
+              <div className="flex shrink-0 items-center gap-2">
+                <motion.button
+                  onClick={() => setShowRedeemModal(true)}
+                  className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2.5 text-sm font-medium text-white/80 transition-colors hover:border-white/25 hover:bg-white/[0.1] hover:text-white"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Ticket className="h-4 w-4" />
+                  Redeem code
+                </motion.button>
+                <motion.button
+                  onClick={() => setShowBuyModal(true)}
+                  className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-amber-400"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Plus className="h-4 w-4" />
+                  New Ticket
+                </motion.button>
+              </div>
             </div>
           </div>
         </div>
@@ -264,6 +319,79 @@ export default function LottoDashboardPage() {
         onClose={handleCloseModal}
         onForceClose={handleForceClose}
       />
+
+      <AnimatePresence>
+        {showRedeemModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0e0e14] p-7 shadow-2xl"
+            >
+              <h3
+                style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                className="mb-1.5 text-2xl font-semibold text-white"
+              >
+                Redeem promo code
+              </h3>
+              <p className="mb-6 text-sm text-white/35">
+                Enter your code and Bitcoin address to get a free 7-day ticket with 1 Plus Ultra.
+              </p>
+              <input
+                type="text"
+                value={redeemCodeValue}
+                onChange={e => {
+                  setRedeemCodeValue(e.target.value);
+                  setRedeemError(null);
+                }}
+                placeholder="Promo code (e.g. BLOCK-XXXX-XXXX)"
+                className="mb-4 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              />
+              <input
+                type="text"
+                value={redeemBtcAddress}
+                onChange={e => {
+                  setRedeemBtcAddress(e.target.value);
+                  setRedeemError(null);
+                }}
+                placeholder="Bitcoin address (bc1q...)"
+                className={`mb-4 w-full rounded-xl border bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:ring-1 ${
+                  redeemError ? 'border-red-500/60 focus:border-red-500/50' : 'border-white/10 focus:border-amber-500/50 focus:ring-amber-500/20'
+                }`}
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              />
+              {redeemError && <p className="mb-4 text-xs text-red-400">{redeemError}</p>}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRedeemModal(false);
+                    setRedeemError(null);
+                    setRedeemCodeValue('');
+                    setRedeemBtcAddress('');
+                  }}
+                  className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-medium text-white/45 transition-colors hover:border-white/20 hover:text-white/70"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  type="button"
+                  onClick={handleRedeemSubmit}
+                  disabled={redeemSubmitting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
+                  whileHover={redeemSubmitting ? undefined : { scale: 1.02 }}
+                  whileTap={redeemSubmitting ? undefined : { scale: 0.98 }}
+                >
+                  {redeemSubmitting ? 'Redeeming...' : 'Redeem'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <ToastContainer position="bottom-center" theme="dark" />
     </div>
