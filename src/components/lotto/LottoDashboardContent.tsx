@@ -36,6 +36,7 @@ function ticketToOrbProps(ticket: LottoTicket, isPlusUltraPending: boolean) {
     isPlusUltra: isPlusUltraPending,
     stars: ticket.stars ?? 5,
     isPlusUltraPending,
+    plusUltraRemaining: ticket.plusUltraRemaining ?? 10,
   };
 }
 

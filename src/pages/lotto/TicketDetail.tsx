@@ -70,14 +70,19 @@ export default function TicketDetail() {
       if (ticketData) setTicket(ticketData);
       if (attemptsData) setAttempts(attemptsData.attempts);
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && err !== null && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : null;
-      toast.error(msg || (err instanceof Error ? err.message : 'Error initiating Plus Ultra.'), {
+      const res = err && typeof err === 'object' && err !== null && 'response' in err ? (err as { response?: { status?: number; data?: { message?: string } } }).response : undefined;
+      const msg = res?.data?.message ?? (err instanceof Error ? err.message : 'Error initiating Plus Ultra.');
+      toast.error(msg, {
         position: 'bottom-center',
         duration: 4000,
       });
+      if (res?.status === 403) {
+        await refreshTickets();
+        if (ticket) {
+          const ticketData = await getTicketDetail(ticket.id);
+          if (ticketData) setTicket(ticketData);
+        }
+      }
     }
   }, [ticket, requestHighEntropyAttempt, refreshTickets, getTicketDetail, getTicketAttempts]);
 
@@ -232,10 +237,10 @@ export default function TicketDetail() {
             {isActive && plusUltraAvailable && (
               <button
                 type="button"
-                disabled={highEntropyPending[ticket.id]}
+                disabled={highEntropyPending[ticket.id] || (ticket.plusUltraRemaining ?? 10) <= 0}
                 onClick={() => handlePlusUltra()}
                 className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition-all sm:w-auto ${
-                  highEntropyPending[ticket.id]
+                  highEntropyPending[ticket.id] || (ticket.plusUltraRemaining ?? 10) <= 0
                     ? 'cursor-not-allowed bg-lotto-orange-500/40 opacity-60'
                     : 'bg-gradient-to-r from-lotto-orange-600 to-lotto-orange-500 hover:from-lotto-orange-500 hover:to-lotto-orange-400'
                 }`}
@@ -248,7 +253,7 @@ export default function TicketDetail() {
                 ) : (
                   <>
                     <Zap className="h-3.5 w-3.5" />
-                    Plus Ultra
+                    Plus Ultra <span className="opacity-80">({ticket.plusUltraRemaining ?? 10} left)</span>
                   </>
                 )}
               </button>

@@ -62,6 +62,8 @@ interface UseLottoReturn {
   loading: boolean;
   error: string | null;
   refreshTickets: () => Promise<void>;
+  /** Refresh tickets in background without loading spinner; preserves card order. */
+  refreshTicketsSilent: () => Promise<void>;
   getTicketDetail: (ticketId: string) => Promise<LottoTicket | null>;
   getTicketAttempts: (
     ticketId: string,
@@ -205,6 +207,24 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     }
   }, []);
 
+  /** Merge fresh ticket data into current list preserving order (no card position jump). */
+  const mergeTicketsPreservingOrder = useCallback(
+    (prev: LottoTicket[], next: LottoTicket[]): LottoTicket[] => {
+      const nextById = new Map(next.map(t => [t.id, t]));
+      const result: LottoTicket[] = [];
+      for (const t of prev) {
+        const updated = nextById.get(t.id);
+        if (updated) result.push(updated);
+        else result.push(t);
+      }
+      for (const t of next) {
+        if (!prev.some(p => p.id === t.id)) result.push(t);
+      }
+      return result;
+    },
+    []
+  );
+
   // Silent refresh: update data in background without loading spinner (smooth, no reload)
   const lastSilentRefreshRef = useRef<number>(0);
   const REFRESH_THROTTLE_MS = 5000; // min 5s between silent refreshes
@@ -215,12 +235,23 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     lastSilentRefreshRef.current = now;
     try {
       const [ticketsData, statsData] = await Promise.all([fetchUserTickets(), fetchSystemStats()]);
-      setTickets(ticketsData);
+      setTickets(prev => mergeTicketsPreservingOrder(prev, ticketsData));
       setStats(statsData.stats);
     } catch (err: any) {
       console.error('[useLotto] Silent refresh failed:', err);
     }
-  }, []);
+  }, [mergeTicketsPreservingOrder]);
+
+  /** Silent refresh without throttle (e.g. after Plus Ultra) so UI updates immediately. */
+  const refreshTicketsSilent = useCallback(async () => {
+    try {
+      const [ticketsData, statsData] = await Promise.all([fetchUserTickets(), fetchSystemStats()]);
+      setTickets(prev => mergeTicketsPreservingOrder(prev, ticketsData));
+      setStats(statsData.stats);
+    } catch (err: any) {
+      console.error('[useLotto] Silent refresh failed:', err);
+    }
+  }, [mergeTicketsPreservingOrder]);
 
   useEffect(() => {
     loadTickets();
@@ -318,6 +349,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     loading,
     error,
     refreshTickets,
+    refreshTicketsSilent,
     getTicketDetail,
     getTicketAttempts,
     requestHighEntropyAttempt,

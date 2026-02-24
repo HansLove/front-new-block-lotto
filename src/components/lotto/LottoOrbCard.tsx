@@ -23,6 +23,8 @@ export interface LottoOrbCardProps {
   isMining?: boolean;
   isPlusUltra?: boolean;
   stars?: number;
+  /** Remaining Plus Ultra shots (default 10). Button disabled when 0. */
+  plusUltraRemaining?: number;
 
   onOpenDetails?: (_ticketId: string) => void;
   onCopyAddress?: (_address: string) => void;
@@ -89,6 +91,7 @@ export function LottoOrbCard({
   onCopyAddress,
   onPlusUltra,
   isPlusUltraPending = false,
+  plusUltraRemaining = 10,
 }: LottoOrbCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const prevAttemptsRef = useRef(attemptsTotal);
@@ -150,11 +153,12 @@ export function LottoOrbCard({
     : 'Never';
 
   const statusCfg = STATUS_CONFIG[status];
-  const canPlusUltra =
+  const showPlusUltraBlock =
     plusUltraAvailable &&
     (status === 'ACTIVE' || status === 'MINING') &&
     new Date(expiresAt) > new Date() &&
     Boolean(onPlusUltra);
+  const canPlusUltra = showPlusUltraBlock && plusUltraRemaining > 0;
 
   return (
     <motion.div
@@ -303,16 +307,16 @@ export function LottoOrbCard({
           <ChevronRight className="h-3.5 w-3.5" />
         </button>
 
-        {canPlusUltra && (
+        {showPlusUltraBlock && (
           <button
             type="button"
-            disabled={isPlusUltraPending}
+            disabled={isPlusUltraPending || !canPlusUltra}
             onClick={e => {
               e.stopPropagation();
               onPlusUltra?.();
             }}
             className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition-all ${
-              isPlusUltraPending
+              isPlusUltraPending || !canPlusUltra
                 ? 'cursor-not-allowed bg-lotto-orange-500/40 opacity-60'
                 : 'bg-gradient-to-r from-lotto-orange-600 to-lotto-orange-500 hover:from-lotto-orange-500 hover:to-lotto-orange-400'
             }`}
@@ -325,7 +329,7 @@ export function LottoOrbCard({
             ) : (
               <>
                 <Zap className="h-3.5 w-3.5" />
-                Plus Ultra
+                Plus Ultra <span className="opacity-80">({plusUltraRemaining} left)</span>
               </>
             )}
           </button>

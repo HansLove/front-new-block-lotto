@@ -52,7 +52,7 @@ export default function LottoDashboardPage() {
   const orderIdRef = useRef(orderId);
   orderIdRef.current = orderId;
 
-  const { tickets, stats, loading, refreshTickets, requestHighEntropyAttempt, highEntropyPending } = useLotto({
+  const { tickets, stats, loading, refreshTickets, refreshTicketsSilent, requestHighEntropyAttempt, highEntropyPending } = useLotto({
     onPaymentLifecycle: useCallback((event: { orderId: string; status: 'waiting' | 'confirming' }) => {
       if (event.orderId !== orderIdRef.current) return;
       setPaymentStatus(event.status);
@@ -144,16 +144,15 @@ export default function LottoDashboardPage() {
       toast.info('Requesting high entropy from Bitcoin mining...', { position: 'bottom-center', autoClose: 2000 });
       const result = await requestHighEntropyAttempt(ticket);
       toast.success(result.message || 'Plus Ultra initiated.', { position: 'bottom-center', autoClose: 3000 });
-      await refreshTickets();
+      await refreshTicketsSilent();
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && err !== null && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : null;
-      toast.error(msg || (err instanceof Error ? err.message : 'Error initiating Plus Ultra.'), {
+      const res = err && typeof err === 'object' && err !== null && 'response' in err ? (err as { response?: { status?: number; data?: { message?: string } } }).response : undefined;
+      const msg = res?.data?.message ?? (err instanceof Error ? err.message : 'Error initiating Plus Ultra.');
+      toast.error(msg, {
         position: 'bottom-center',
         autoClose: 4000,
       });
+      if (res?.status === 403) await refreshTicketsSilent();
     }
   };
 

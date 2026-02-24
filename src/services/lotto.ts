@@ -16,6 +16,8 @@ export interface LottoTicket {
   /** Number of blocks/rounds participated in. */
   totalAttempts: number;
   lastAttemptAt: string | null;
+  /** Remaining Plus Ultra (high-frequency) shots for this ticket. */
+  plusUltraRemaining?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -62,6 +64,7 @@ function mapInstanceToLottoTicket(row: Record<string, unknown>): LottoTicket {
     nonceTotal: Number(row.nonce_total ?? row.nonceTotal ?? 0),
     totalAttempts: Number(row.totalAttempts ?? 0),
     lastAttemptAt: row.lastAttemptAt != null ? String(row.lastAttemptAt) : null,
+    plusUltraRemaining: Number(row.plus_ultra_remaining ?? row.plusUltraRemaining ?? 10),
     createdAt: String(row.created_at ?? row.createdAt ?? ''),
     updatedAt: String(row.updated_at ?? row.updatedAt ?? ''),
   };
