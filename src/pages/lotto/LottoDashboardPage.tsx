@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useLogInHook';
 import { useLotto } from '@/hooks/useLotto';
 import { useLottoDeposit } from '@/hooks/useLottoDeposit';
 import type { LottoTicket } from '@/services/lotto';
-import { redeemPromoCode } from '@/services/lotto';
+import { estimatedWaitMinutes, redeemPromoCode } from '@/services/lotto';
 import { isValidBitcoinAddress } from '@/utils/bitcoinAddress';
 
 function useLottoDisplayFonts() {
@@ -59,7 +59,7 @@ export default function LottoDashboardPage() {
   const orderIdRef = useRef(orderId);
   orderIdRef.current = orderId;
 
-  const { tickets, stats, loading, refreshTickets, refreshTicketsSilent, addTicket, requestHighEntropyAttempt, highEntropyPending } = useLotto({
+  const { tickets, stats, loading, refreshTickets, refreshTicketsSilent, addTicket, requestHighEntropyAttempt, highEntropyPending, highEntropyQueued } = useLotto({
     onPaymentLifecycle: useCallback((event: { orderId: string; status: 'waiting' | 'confirming' }) => {
       if (event.orderId !== orderIdRef.current) return;
       setPaymentStatus(event.status);
@@ -185,10 +185,16 @@ export default function LottoDashboardPage() {
 
   const handlePlusUltra = async (ticket: LottoTicket) => {
     try {
-      toast.info('Requesting high entropy from Bitcoin mining...', { position: 'bottom-center', autoClose: 2000 });
       const result = await requestHighEntropyAttempt(ticket);
-      toast.success(result.message || 'Plus Ultra initiated.', { position: 'bottom-center', autoClose: 3000 });
-      await refreshTicketsSilent();
+      if (result.status === 'queued') {
+        const estimatedMinutes = estimatedWaitMinutes(result.queuePosition);
+        toast.info(`Plus Ultra queued -- Position #${result.queuePosition}. Estimated wait: ~${estimatedMinutes}m.`, {
+          position: 'bottom-center',
+          autoClose: 4000,
+        });
+      } else {
+        toast.info('Plus Ultra mining in progress...', { position: 'bottom-center', autoClose: 3000 });
+      }
     } catch (err: unknown) {
       const res = err && typeof err === 'object' && err !== null && 'response' in err ? (err as { response?: { status?: number; data?: { message?: string } } }).response : undefined;
       const msg = res?.data?.message ?? (err instanceof Error ? err.message : 'Error initiating Plus Ultra.');
@@ -286,6 +292,7 @@ export default function LottoDashboardPage() {
         tickets={tickets}
         stats={stats}
         highEntropyPending={highEntropyPending}
+        highEntropyQueued={highEntropyQueued}
         showPaymentSkeleton={showPaymentSkeleton}
         onBuyTicket={() => setShowBuyModal(true)}
         onOpenDetails={id => navigate(`/lotto/${id}`)}

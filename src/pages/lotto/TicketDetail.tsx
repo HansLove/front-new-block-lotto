@@ -10,6 +10,7 @@ import { getOrbParams, getOrbSizeFromAttempts } from '@/components/lotto/orbMath
 import { ticketIdToHex } from '@/components/lotto/ticketIdToColor';
 import { useLotto } from '@/hooks/useLotto';
 import type { LottoAttempt, LottoTicket } from '@/services/lotto';
+import { estimatedWaitMinutes } from '@/services/lotto';
 
 export default function TicketDetail() {
   const { ticketId } = useParams<{ ticketId: string }>();
@@ -20,7 +21,8 @@ export default function TicketDetail() {
     stats,
     requestHighEntropyAttempt,
     highEntropyPending,
-    refreshTickets,
+    highEntropyQueued,
+    refreshTicketsSilent,
   } = useLotto();
   const [ticket, setTicket] = useState<LottoTicket | null>(null);
   const [attempts, setAttempts] = useState<LottoAttempt[]>([]);
@@ -59,16 +61,16 @@ export default function TicketDetail() {
   const handlePlusUltra = useCallback(async () => {
     if (!ticket) return;
     try {
-      toast('Requesting high entropy from Bitcoin mining...', { position: 'bottom-center', duration: 2000 });
       const result = await requestHighEntropyAttempt(ticket);
-      toast.success(result.message || 'Plus Ultra initiated.', { position: 'bottom-center', duration: 3000 });
-      await refreshTickets();
-      const [ticketData, attemptsData] = await Promise.all([
-        getTicketDetail(ticket.id),
-        getTicketAttempts(ticket.id, 50, 0),
-      ]);
-      if (ticketData) setTicket(ticketData);
-      if (attemptsData) setAttempts(attemptsData.attempts);
+      if (result.status === 'queued') {
+        const estimatedMinutes = estimatedWaitMinutes(result.queuePosition);
+        toast(`Plus Ultra queued -- Position #${result.queuePosition}. Estimated wait: ~${estimatedMinutes}m.`, {
+          position: 'bottom-center',
+          duration: 4000,
+        });
+      } else {
+        toast('Plus Ultra mining in progress...', { position: 'bottom-center', duration: 3000 });
+      }
     } catch (err: unknown) {
       const res = err && typeof err === 'object' && err !== null && 'response' in err ? (err as { response?: { status?: number; data?: { message?: string } } }).response : undefined;
       const msg = res?.data?.message ?? (err instanceof Error ? err.message : 'Error initiating Plus Ultra.');
@@ -77,14 +79,14 @@ export default function TicketDetail() {
         duration: 4000,
       });
       if (res?.status === 403) {
-        await refreshTickets();
+        await refreshTicketsSilent();
         if (ticket) {
           const ticketData = await getTicketDetail(ticket.id);
           if (ticketData) setTicket(ticketData);
         }
       }
     }
-  }, [ticket, requestHighEntropyAttempt, refreshTickets, getTicketDetail, getTicketAttempts]);
+  }, [ticket, requestHighEntropyAttempt, refreshTicketsSilent, getTicketDetail]);
 
   const maxNextAttemptMs = (ticket?.frequencyMinutes ?? 10) * 60 * 1000;
 
@@ -234,30 +236,60 @@ export default function TicketDetail() {
               {attemptsTotal.toLocaleString()}
             </p>
             <p className="mt-2 text-sm text-white/35">Next attempt: {nextAttemptTime}</p>
-            {isActive && plusUltraAvailable && (
-              <button
-                type="button"
-                disabled={highEntropyPending[ticket.id] || (ticket.plusUltraRemaining ?? 10) <= 0}
-                onClick={() => handlePlusUltra()}
-                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition-all sm:w-auto ${
-                  highEntropyPending[ticket.id] || (ticket.plusUltraRemaining ?? 10) <= 0
-                    ? 'cursor-not-allowed bg-lotto-orange-500/40 opacity-60'
-                    : 'bg-gradient-to-r from-lotto-orange-600 to-lotto-orange-500 hover:from-lotto-orange-500 hover:to-lotto-orange-400'
-                }`}
-              >
-                {highEntropyPending[ticket.id] ? (
-                  <>
+            {isActive && plusUltraAvailable && (() => {
+              const isPending = highEntropyPending[ticket.id];
+              const queueInfo = highEntropyQueued[ticket.id] ?? null;
+              const isQueued = isPending && queueInfo?.status === 'queued';
+              const isAssigned = isPending && queueInfo?.status === 'assigned';
+              const hasShots = (ticket.plusUltraRemaining ?? 10) > 0;
+
+              if (isQueued) {
+                const waitMin = estimatedWaitMinutes(queueInfo.queuePosition);
+                return (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      disabled
+                      className="flex w-full cursor-wait items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/20 py-2.5 text-sm font-semibold text-amber-400 animate-pulse sm:w-auto"
+                      style={{ animationDuration: '3s' }}
+                    >
+                      <Clock className="h-3.5 w-3.5" />
+                      Queued #{queueInfo.queuePosition}
+                    </button>
+                    <p className="mt-1 text-[10px] text-amber-400/60">~{waitMin}m estimated wait</p>
+                  </div>
+                );
+              }
+
+              if (isAssigned || isPending) {
+                return (
+                  <button
+                    type="button"
+                    disabled
+                    className="mt-4 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-lotto-orange-500/40 py-2.5 text-sm font-semibold text-white opacity-60 sm:w-auto"
+                  >
                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Mining...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-3.5 w-3.5" />
-                    Plus Ultra <span className="opacity-80">({ticket.plusUltraRemaining ?? 10} left)</span>
-                  </>
-                )}
-              </button>
-            )}
+                  </button>
+                );
+              }
+
+              return (
+                <button
+                  type="button"
+                  disabled={!hasShots}
+                  onClick={() => handlePlusUltra()}
+                  className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition-all sm:w-auto ${
+                    !hasShots
+                      ? 'cursor-not-allowed bg-lotto-orange-500/40 opacity-60'
+                      : 'bg-gradient-to-r from-lotto-orange-600 to-lotto-orange-500 hover:from-lotto-orange-500 hover:to-lotto-orange-400'
+                  }`}
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                  Plus Ultra <span className="opacity-80">({ticket.plusUltraRemaining ?? 10} left)</span>
+                </button>
+              );
+            })()}
           </div>
         </motion.div>
 
