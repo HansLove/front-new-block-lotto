@@ -3,7 +3,9 @@ import { ArrowRight, ChevronDown, Plus, Trophy, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useLogInHook';
+import { landingTranslations } from '@/pages/LandingPage/translations';
 
 const SIMULATED_BASE = 12_481_903_774;
 
@@ -32,9 +34,23 @@ function SimulatedLiveCounter() {
   return <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{value.toLocaleString()}</span>;
 }
 
+const KEY_NUMBER_STYLES = [
+  { color: 'text-amber-400', border: 'border-amber-500/15', bg: 'rgba(245,158,11,0.04)' },
+  { color: 'text-teal-400', border: 'border-teal-500/15', bg: 'rgba(20,184,166,0.04)' },
+  { color: 'text-lotto-green-400', border: 'border-lotto-green-500/15', bg: 'rgba(34,197,94,0.04)' },
+] as const;
+
+const STEP_STYLES = [
+  { accent: 'text-amber-400', border: 'border-amber-500/10', glow: 'rgba(245,158,11,0.04)' },
+  { accent: 'text-teal-400', border: 'border-teal-500/10', glow: 'rgba(20,184,166,0.04)' },
+  { accent: 'text-lotto-green-400', border: 'border-lotto-green-500/10', glow: 'rgba(34,197,94,0.04)' },
+] as const;
+
 const Hero = () => {
   useLottoDisplayFonts();
 
+  const { locale } = useLanguage();
+  const t = landingTranslations[locale];
   const { isSessionActive, openLoginModal } = useAuth();
   const navigate = useNavigate();
   const howItWorksRef = useRef<HTMLDivElement>(null);
@@ -105,8 +121,8 @@ const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.7 }}
           >
-            <span className="mb-8 inline-block rounded-full border border-amber-500/25 bg-amber-500/10 px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-amber-400">
-              Decentralized Bitcoin Lottery
+            <span className="mb-8 inline-block rounded-full border border-amber-500/25 bg-amber-500/10 px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-amber-400/90">
+              {t.hero.pill}
             </span>
           </motion.div>
 
@@ -117,7 +133,7 @@ const Hero = () => {
             style={{ fontFamily: "'Cormorant Garamond', serif" }}
             className="mb-6 text-[clamp(3rem,9vw,6.5rem)] font-light leading-[1.05] tracking-tight"
           >
-            <span className="block text-white/90">The fortune of a</span>
+            <span className="block text-white/90">{t.hero.headline1}</span>
             <span
               className="block font-semibold italic"
               style={{
@@ -127,7 +143,7 @@ const Hero = () => {
                 backgroundClip: 'text',
               }}
             >
-              Bitcoin block
+              {t.hero.headline2}
             </span>
           </motion.h1>
 
@@ -137,9 +153,9 @@ const Hero = () => {
             transition={{ delay: 0.8, duration: 0.8 }}
             className="mx-auto mb-12 max-w-lg text-base font-light leading-relaxed text-white/40"
           >
-            Every 10 minutes, your ticket challenges the Bitcoin network. One block mined sends{' '}
-            <span className="text-amber-400/80">the entire block reward</span> straight to your address. No house edge.
-            No middlemen.
+            {t.hero.subtext}
+            <span className="text-amber-400/80">{t.hero.subtextHighlight}</span>
+            {t.hero.subtextEnd}
           </motion.p>
 
           {/* Live counter */}
@@ -167,7 +183,7 @@ const Hero = () => {
                   animate={{ opacity: [1, 0.3, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 />
-                total network attempts
+                {t.hero.counterLabel}
               </div>
             </div>
           </motion.div>
@@ -186,12 +202,12 @@ const Hero = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >
-              Start Playing
+              {t.hero.ctaStart}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </motion.button>
 
             <Link to="/lotto" className="text-sm text-white/40 transition-colors hover:text-white/70">
-              See live lottos →
+              {t.hero.seeLive}
             </Link>
           </motion.div>
         </div>
@@ -211,43 +227,18 @@ const Hero = () => {
       <section className="border-y border-white/[0.05] bg-white/[0.015]">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {[
-              {
-                value: '3.125',
-                unit: 'BTC',
-                label: 'Current block reward sent to your address',
-                color: 'text-amber-400',
-                border: 'border-amber-500/15',
-                bg: 'rgba(245,158,11,0.04)',
-              },
-              {
-                value: '10',
-                unit: 'min',
-                label: 'Automatic attempt frequency, no action required',
-                color: 'text-teal-400',
-                border: 'border-teal-500/15',
-                bg: 'rgba(20,184,166,0.04)',
-              },
-              {
-                value: '$10',
-                unit: '/mo',
-                label: 'Per ticket — one-time setup, runs automatically',
-                color: 'text-lotto-green-400',
-                border: 'border-lotto-green-500/15',
-                bg: 'rgba(34,197,94,0.04)',
-              },
-            ].map((item, i) => (
+            {t.keyNumbers.map((item, i) => (
               <motion.div
                 key={item.label}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.12, duration: 0.7 }}
-                className={`rounded-2xl border ${item.border} p-7`}
-                style={{ background: item.bg }}
+                className={`rounded-2xl border ${KEY_NUMBER_STYLES[i].border} p-7`}
+                style={{ background: KEY_NUMBER_STYLES[i].bg }}
               >
                 <div
-                  className={`mb-2 font-bold ${item.color}`}
+                  className={`mb-2 font-bold ${KEY_NUMBER_STYLES[i].color}`}
                   style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '2.5rem' }}
                 >
                   {item.value}
@@ -269,54 +260,28 @@ const Hero = () => {
             viewport={{ once: true }}
             className="mb-16 text-center"
           >
-            <p className="mb-3 text-[10px] uppercase tracking-[0.25em] text-white/25">Simple by design</p>
+            <p className="mb-3 text-[10px] uppercase tracking-[0.25em] text-white/25">{t.howItWorks.subtitle}</p>
             <h2
               style={{ fontFamily: "'Cormorant Garamond', serif" }}
               className="text-[clamp(2.4rem,5vw,3.5rem)] font-light text-white"
             >
-              How it works
+              {t.howItWorks.title}
             </h2>
           </motion.header>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {[
-              {
-                number: '01',
-                icon: Plus,
-                title: 'Buy a ticket',
-                desc: 'Enter your Bitcoin address and pay $10 for 30 days of automatic participation. Your reward address is locked in — wins go there directly.',
-                accent: 'text-amber-400',
-                border: 'border-amber-500/10',
-                glow: 'rgba(245,158,11,0.04)',
-              },
-              {
-                number: '02',
-                icon: Zap,
-                title: 'Auto-mine every 10 min',
-                desc: 'Your ticket attempts to mine a Bitcoin block automatically. Thousands of attempts happen per day across all active tickets on the network.',
-                accent: 'text-teal-400',
-                border: 'border-teal-500/10',
-                glow: 'rgba(20,184,166,0.04)',
-              },
-              {
-                number: '03',
-                icon: Trophy,
-                title: 'Claim the block reward',
-                desc: 'If a block is mined during your attempt, the entire coinbase reward (3.125 BTC + fees) is sent to your address. No cuts. No delays.',
-                accent: 'text-lotto-green-400',
-                border: 'border-lotto-green-500/10',
-                glow: 'rgba(34,197,94,0.04)',
-              },
-            ].map((step, i) => (
+            {t.howItWorks.steps.map((step, i) => {
+              const Icon = [Plus, Zap, Trophy][i];
+              return (
               <motion.article
                 key={step.number}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.18, duration: 0.7 }}
-                className={`relative rounded-2xl border ${step.border} p-8`}
+                className={`relative rounded-2xl border ${STEP_STYLES[i].border} p-8`}
                 style={{
-                  background: `radial-gradient(ellipse at 30% 20%, ${step.glow} 0%, transparent 60%)`,
+                  background: `radial-gradient(ellipse at 30% 20%, ${STEP_STYLES[i].glow} 0%, transparent 60%)`,
                 }}
               >
                 <div
@@ -325,13 +290,14 @@ const Hero = () => {
                 >
                   {step.number}
                 </div>
-                <div className={`mb-4 inline-flex rounded-xl border ${step.border} p-2.5`}>
-                  <step.icon className={`h-5 w-5 ${step.accent}`} />
+                <div className={`mb-4 inline-flex rounded-xl border ${STEP_STYLES[i].border} p-2.5`}>
+                  <Icon className={`h-5 w-5 ${STEP_STYLES[i].accent}`} />
                 </div>
                 <h3 className="mb-3 text-lg font-medium text-white/90">{step.title}</h3>
                 <p className="text-sm leading-relaxed text-white/35">{step.desc}</p>
               </motion.article>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -353,18 +319,17 @@ const Hero = () => {
                 background: 'radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%)',
               }}
             />
-            <p className="mb-4 text-[10px] uppercase tracking-[0.25em] text-white/25">Ready to play?</p>
+            <p className="mb-4 text-[10px] uppercase tracking-[0.25em] text-white/25">{t.finalCta.subtitle}</p>
             <h2
               style={{ fontFamily: "'Cormorant Garamond', serif" }}
               className="mb-6 text-[clamp(2.5rem,6vw,4rem)] font-light text-white"
             >
-              Someone has to win.
+              {t.finalCta.title}
               <br />
-              <span className="italic text-amber-400">It could be you.</span>
+              <span className="italic text-amber-400">{t.finalCta.titleHighlight}</span>
             </h2>
             <p className="mx-auto mb-10 max-w-md text-sm font-light leading-relaxed text-white/35">
-              The probability is real. The reward is real. Your ticket runs in the background every 10 minutes. You just
-              need to start.
+              {t.finalCta.body}
             </p>
             <motion.button
               onClick={handleStartPlaying}
@@ -373,11 +338,11 @@ const Hero = () => {
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.98 }}
             >
-              Start Playing
+              {t.finalCta.cta}
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </motion.button>
             <p className="mt-6 text-xs text-white/20">
-              $10 per ticket &middot; 30 days &middot; Automatic participation &middot; Cancel anytime
+              {t.finalCta.footer}
             </p>
           </motion.div>
         </div>
