@@ -1,5 +1,5 @@
-import { Dialog, Transition } from '@headlessui/react';
-import { ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Dialog, Menu, Transition } from '@headlessui/react';
+import { ArrowRightOnRectangleIcon, Bars3Icon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Fragment, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -81,20 +81,52 @@ const Navbar = () => {
             >
               + New Lotto
             </button> */}
-            <button
-              onClick={() => (isSessionActive ? navigate('/lotto') : openLoginModal())}
-              className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/70 transition-colors hover:border-white/30 hover:text-white"
-            >
-              {isSessionActive ? 'Dashboard' : 'Connect'}
-            </button>
-            {isSessionActive && (
+            {isSessionActive ? (
+              <Menu as="div" className="relative">
+                <Menu.Button className="flex items-center gap-1.5 rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/70 transition-colors hover:border-white/30 hover:text-white">
+                  Dashboard
+                  <ChevronDownIcon className="h-4 w-4 text-white/50" aria-hidden="true" />
+                </Menu.Button>
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="opacity-0"
+                  enterTo="opacity-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="opacity-100"
+                  leaveTo="opacity-0"
+                >
+                  <Menu.Items className="absolute right-0 top-full z-50 mt-1.5 min-w-[10rem] origin-top-right rounded-lg border border-white/[0.07] bg-[#0e0e14] py-1 shadow-lg focus:outline-none">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={() => navigate('/lotto')}
+                          className={`block w-full px-4 py-2 text-left text-sm ${active ? 'bg-white/10 text-white' : 'text-white/80'}`}
+                        >
+                          Dashboard
+                        </button>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={handleLogout}
+                          className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-white/50 ${active ? 'bg-white/10 text-white/80' : ''}`}
+                        >
+                          <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                          Log out
+                        </button>
+                      )}
+                    </Menu.Item>
+                  </Menu.Items>
+                </Transition>
+              </Menu>
+            ) : (
               <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/50 transition-colors hover:border-white/25 hover:text-white/80"
-                aria-label="Log out"
+                onClick={openLoginModal}
+                className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white/70 transition-colors hover:border-white/30 hover:text-white"
               >
-                <ArrowRightOnRectangleIcon className="h-4 w-4" />
-                Log out
+                Connect
               </button>
             )}
           </div>
@@ -151,15 +183,6 @@ const Navbar = () => {
                       >
                         {locale === 'en' ? 'Español' : 'English'}
                       </button>
-                      {/* <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          handleNewLotto();
-                        }}
-                        className="w-full rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-amber-400"
-                      >
-                        + New Lotto
-                      </button> */}
                       <button
                         onClick={() => {
                           setMobileMenuOpen(false);
@@ -169,16 +192,20 @@ const Navbar = () => {
                       >
                         {isSessionActive ? 'Dashboard' : 'Connect'}
                       </button>
-                      {isSessionActive && (
+                    </div>
+                    {isSessionActive && (
+                      <div className="border-t border-white/[0.07] py-4">
                         <button
-                          onClick={handleLogout}
-                          className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/50 transition-colors hover:border-white/25 hover:text-white/80"
+                          onClick={() => {
+                            handleLogout();
+                          }}
+                          className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-medium text-white/40 transition-colors hover:bg-white/5 hover:text-white/60"
                         >
-                          <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                          <ArrowRightOnRectangleIcon className="h-3.5 w-3.5" />
                           Log out
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </Dialog.Panel>
