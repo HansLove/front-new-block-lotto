@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
-import { ChevronRight, Copy, Zap } from 'lucide-react';
+import { ChevronRight, Clock, Copy, Zap } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import type { HighEnergyQueueInfo } from '@/hooks/useLotto';
+import { estimatedWaitMinutes } from '@/services/lotto';
 
 import { formatCompact, formatExact } from './formatAttempts';
 import { LottoOrbCanvas } from './LottoOrbCanvas';
@@ -25,6 +28,8 @@ export interface LottoOrbCardProps {
   stars?: number;
   /** Remaining Plus Ultra shots (default 10). Button disabled when 0. */
   plusUltraRemaining?: number;
+  /** Queue/assigned info from the backend 202 response. */
+  queueInfo?: HighEnergyQueueInfo | null;
 
   onOpenDetails?: (_ticketId: string) => void;
   onCopyAddress?: (_address: string) => void;
@@ -92,6 +97,7 @@ export function LottoOrbCard({
   onPlusUltra,
   isPlusUltraPending = false,
   plusUltraRemaining = 10,
+  queueInfo = null,
 }: LottoOrbCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const prevAttemptsRef = useRef(attemptsTotal);
@@ -129,16 +135,16 @@ export function LottoOrbCard({
   }, []);
 
   useEffect(() => {
+    if (nextAttemptInSec <= 0) {
+      setCountdown(0);
+      return;
+    }
     setCountdown(nextAttemptInSec);
-  }, [nextAttemptInSec]);
-
-  useEffect(() => {
-    if (countdown <= 0) return;
     const t = setInterval(() => {
       setCountdown(s => Math.max(0, s - 1));
     }, 1000);
     return () => clearInterval(t);
-  }, [countdown]);
+  }, [nextAttemptInSec]);
 
   const handleCopy = useCallback(() => {
     if (!btcAddress) return;
@@ -307,33 +313,57 @@ export function LottoOrbCard({
           <ChevronRight className="h-3.5 w-3.5" />
         </button>
 
-        {showPlusUltraBlock && (
-          <button
-            type="button"
-            disabled={isPlusUltraPending || !canPlusUltra}
-            onClick={e => {
-              e.stopPropagation();
-              onPlusUltra?.();
-            }}
-            className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition-all ${
-              isPlusUltraPending || !canPlusUltra
-                ? 'cursor-not-allowed bg-lotto-orange-500/40 opacity-60'
-                : 'bg-gradient-to-r from-lotto-orange-600 to-lotto-orange-500 hover:from-lotto-orange-500 hover:to-lotto-orange-400'
-            }`}
-          >
-            {isPlusUltraPending ? (
-              <>
+        {showPlusUltraBlock && (() => {
+          const isQueued = isPlusUltraPending && queueInfo?.status === 'queued';
+          const isAssigned = isPlusUltraPending && queueInfo?.status === 'assigned';
+
+          if (isQueued) {
+            const waitMin = estimatedWaitMinutes(queueInfo.queuePosition);
+            return (
+              <button
+                type="button"
+                disabled
+                className="flex w-full cursor-wait items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/20 py-2.5 text-sm font-semibold text-amber-400 animate-pulse"
+                style={{ animationDuration: '3s' }}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                Queued #{queueInfo.queuePosition} (~{waitMin}m)
+              </button>
+            );
+          }
+
+          if (isAssigned || isPlusUltraPending) {
+            return (
+              <button
+                type="button"
+                disabled
+                className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-lotto-orange-500/40 py-2.5 text-sm font-semibold text-white opacity-60"
+              >
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 Mining...
-              </>
-            ) : (
-              <>
-                <Zap className="h-3.5 w-3.5" />
-                Plus Ultra <span className="opacity-80">({plusUltraRemaining} left)</span>
-              </>
-            )}
-          </button>
-        )}
+              </button>
+            );
+          }
+
+          return (
+            <button
+              type="button"
+              disabled={!canPlusUltra}
+              onClick={e => {
+                e.stopPropagation();
+                onPlusUltra?.();
+              }}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition-all ${
+                !canPlusUltra
+                  ? 'cursor-not-allowed bg-lotto-orange-500/40 opacity-60'
+                  : 'bg-gradient-to-r from-lotto-orange-600 to-lotto-orange-500 hover:from-lotto-orange-500 hover:to-lotto-orange-400'
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Plus Ultra <span className="opacity-80">({plusUltraRemaining} left)</span>
+            </button>
+          );
+        })()}
       </div>
     </motion.div>
   );

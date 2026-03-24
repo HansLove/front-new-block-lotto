@@ -117,7 +117,7 @@ export const fetchTicketAttempts = async (
   ticketId: string,
   limit = 50,
   skip = 0
-): Promise<{ attempts: LottoAttempt[]; pagination: { total: number; limit: number; skip: number; hasMore: boolean } }> => {
+): Promise<{ attempts: LottoAttempt[]; pagination: AttemptsPagination }> => {
   const response = await axios.get(`${API_URL}instances/${ticketId}/events`, {
     ...getAuthHeaders(),
     params: { limit, skip },
@@ -154,9 +154,25 @@ export const fetchSystemStats = async (): Promise<{
   };
 };
 
-/** Response from POST /instances/:id/high (process high mode - Bitcoin mining energy) */
+/** Response from POST /instances/:id/high (202 Accepted - mining assigned or queued) */
 export interface InstanceHighModeResponse {
-  message: string;
+  status: 'assigned' | 'queued';
+  queuePosition: number;
+}
+
+export interface AttemptsPagination {
+  total: number;
+  limit: number;
+  skip: number;
+  hasMore: boolean;
+}
+
+/**
+ * Compute estimated wait time in minutes for a queued Plus Ultra request.
+ * Capped at 10 minutes.
+ */
+export function estimatedWaitMinutes(queuePosition: number): number {
+  return Math.min(Math.ceil((120 + queuePosition * 120) / 60), 10);
 }
 
 /**
