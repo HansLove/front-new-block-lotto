@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Outlet, Route, Routes } from 'react-router-dom
 
 import LoginModal from '@/components/Login/Login';
 import Navbar from '@/components/Navbar/Navbar';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 
 import { Footer } from './components/footer';
 import Loader from './components/Loader/Loader';
@@ -59,8 +60,9 @@ function App() {
   }
 
   return (
-    <Router>
-      <Suspense fallback={<Loader />}>
+    <LanguageProvider>
+      <Router>
+        <Suspense fallback={<Loader />}>
         <Routes>
           {/* Landing page - no navbar */}
           <Route element={<LandingLayout />}>
@@ -87,9 +89,10 @@ function App() {
           {/* 404 - Catch all unmatched routes */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </Suspense>
-      <Footer />
-    </Router>
+        </Suspense>
+        <Footer />
+      </Router>
+    </LanguageProvider>
   );
 }
 

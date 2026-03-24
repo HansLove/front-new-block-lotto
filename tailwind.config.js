@@ -12,8 +12,23 @@ export default {
       animation: {
         'spin-slow': 'spin 3s linear infinite',
         'border': 'border 4s linear infinite',
+        'loader-glow': 'loader-glow 2.2s ease-in-out infinite',
+        'loader-dot': 'loader-dot 1.4s ease-in-out infinite both',
+        'loader-line': 'loader-line 1.8s ease-in-out infinite',
       },
       keyframes: {
+        'loader-glow': {
+          '0%, 100%': { opacity: '0.5', transform: 'scale(0.96)' },
+          '50%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'loader-dot': {
+          '0%, 80%, 100%': { opacity: '0.25', transform: 'scale(0.9)' },
+          '40%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'loader-line': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
         border: {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
