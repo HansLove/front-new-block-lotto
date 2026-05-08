@@ -9,9 +9,11 @@ import { toast, ToastContainer } from 'react-toastify';
 import { BuyTicketModal } from '@/components/lotto/BuyTicketModal';
 import { formatExact } from '@/components/lotto/formatAttempts';
 import { LottoDashboardContent } from '@/components/lotto/LottoDashboardContent';
+import { type PaymentMethod } from '@/components/lotto/PaymentMethodTabs';
 import { type PaymentLifecycleStatus } from '@/components/lotto/PaymentStatusPipeline';
 import { useAuth } from '@/hooks/useLogInHook';
-import { useLotto } from '@/hooks/useLotto';
+import { type PaymentLifecycleEvent, useLotto } from '@/hooks/useLotto';
+import { useLottoBtcDeposit } from '@/hooks/useLottoBtcDeposit';
 import { useLottoDeposit } from '@/hooks/useLottoDeposit';
 import type { LottoTicket } from '@/services/lotto';
 import { redeemPromoCode } from '@/services/lotto';
@@ -37,34 +39,55 @@ export default function LottoDashboardPage() {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<PaymentLifecycleStatus>('idle');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('btc');
   const [redeemCodeValue, setRedeemCodeValue] = useState('');
   const [redeemBtcAddress, setRedeemBtcAddress] = useState('');
   const [redeemSubmitting, setRedeemSubmitting] = useState(false);
   const [redeemError, setRedeemError] = useState<string | null>(null);
 
-  const {
-    btcAddress,
-    selectedCurrency,
-    paymentData,
-    orderId,
-    isPending,
-    isSubmitting,
-    error,
-    setBtcAddress,
-    selectCurrency,
-    submitPayment,
-    resetPayment,
-  } = useLottoDeposit();
+  const usdtDeposit = useLottoDeposit();
+  const btcDeposit = useLottoBtcDeposit();
 
-  const orderIdRef = useRef(orderId);
-  orderIdRef.current = orderId;
+  const activeOrderId =
+    paymentMethod === 'btc' ? btcDeposit.orderId : usdtDeposit.orderId;
+  const activeOrderIdRef = useRef(activeOrderId);
+  activeOrderIdRef.current = activeOrderId;
+
+  const paymentMethodRef = useRef(paymentMethod);
+  paymentMethodRef.current = paymentMethod;
+
+  const handleLifecycleEvent = useCallback((event: PaymentLifecycleEvent) => {
+    if (event.orderId !== activeOrderIdRef.current) return;
+    const expectedProvider = paymentMethodRef.current === 'btc' ? 'btcpay' : 'nowpayments';
+    if (event.provider !== expectedProvider) return;
+
+    if (event.status === 'expired' || event.status === 'invalid') {
+      const message =
+        event.status === 'expired'
+          ? 'BTC invoice expired. You can start a new payment.'
+          : 'BTC invoice was marked invalid. Please try again.';
+      toast.error(message, { position: 'bottom-center', autoClose: 5000 });
+      setPaymentStatus('idle');
+      if (paymentMethodRef.current === 'btc') btcDeposit.resetPayment();
+      else usdtDeposit.resetPayment();
+      return;
+    }
+
+    if (event.status === 'waiting' || event.status === 'confirming') {
+      setPaymentStatus(event.status);
+    }
+  }, [btcDeposit, usdtDeposit]);
 
   const { tickets, stats, loading, refreshTickets, refreshTicketsSilent, addTicket, requestHighEntropyAttempt, highEntropyPending } = useLotto({
-    onPaymentLifecycle: useCallback((event: { orderId: string; status: 'waiting' | 'confirming' }) => {
-      if (event.orderId !== orderIdRef.current) return;
-      setPaymentStatus(event.status);
-    }, []),
+    onPaymentLifecycle: handleLifecycleEvent,
   });
+
+  const isPending = paymentMethod === 'btc' ? btcDeposit.isPending : usdtDeposit.isPending;
+  const isAnyPending = btcDeposit.isPending || usdtDeposit.isPending;
+  const resetActivePayment = useCallback(() => {
+    if (paymentMethodRef.current === 'btc') btcDeposit.resetPayment();
+    else usdtDeposit.resetPayment();
+  }, [btcDeposit, usdtDeposit]);
 
   const prevTicketsLengthRef = useRef<number>(-1);
   const confirmedRef = useRef(false);
@@ -82,7 +105,7 @@ export default function LottoDashboardPage() {
       prevTicketsLengthRef.current = tickets.length;
       return;
     }
-    if (!isPending) {
+    if (!isAnyPending) {
       confirmedRef.current = false;
       prevTicketsLengthRef.current = tickets.length;
       return;
@@ -93,13 +116,13 @@ export default function LottoDashboardPage() {
       const timerId = setTimeout(() => {
         toast.success('Your ticket is now active!', { position: 'bottom-center' });
         setPaymentStatus('idle');
-        resetPayment();
+        resetActivePayment();
       }, 1500);
       prevTicketsLengthRef.current = tickets.length;
       return () => clearTimeout(timerId);
     }
     prevTicketsLengthRef.current = tickets.length;
-  }, [tickets, isPending, resetPayment]);
+  }, [tickets, isAnyPending, resetActivePayment]);
 
   // Auto-collapse modal a few seconds after payment is "confirming" so user can see the skeleton on the dashboard
   const CONFIRMING_COLLAPSE_SEC = 4;
@@ -112,9 +135,10 @@ export default function LottoDashboardPage() {
   }, [paymentStatus, showBuyModal]);
 
   const handleCopyAddress = () => {
-    if (!paymentData) return;
+    if (paymentMethod !== 'usdt') return;
+    if (!usdtDeposit.paymentData) return;
     navigator.clipboard
-      .writeText(paymentData.payAddress)
+      .writeText(usdtDeposit.paymentData.payAddress)
       .then(() => toast.success('Address copied!'))
       .catch(() => toast.error('Could not copy address'));
   };
@@ -125,11 +149,11 @@ export default function LottoDashboardPage() {
         position: 'bottom-center',
       });
     }
-    if (paymentStatus === 'idle' && isPending) {
+    if (paymentStatus === 'idle' && isAnyPending) {
       toast.info('Waiting for payment. Your ticket will appear automatically.', { position: 'bottom-center' });
     }
     setPaymentStatus('idle');
-    resetPayment();
+    resetActivePayment();
     setShowBuyModal(false);
   };
 
@@ -176,7 +200,7 @@ export default function LottoDashboardPage() {
       autoClose: 5000,
     });
     setPaymentStatus('idle');
-    resetPayment();
+    resetActivePayment();
     setShowBuyModal(false);
   };
 
@@ -306,15 +330,28 @@ export default function LottoDashboardPage() {
       <BuyTicketModal
         isOpen={showBuyModal}
         paymentStatus={paymentStatus}
-        paymentData={paymentData}
-        btcAddress={btcAddress}
-        setBtcAddress={setBtcAddress}
-        selectedCurrency={selectedCurrency}
-        selectCurrency={selectCurrency}
-        isSubmitting={isSubmitting}
-        error={error}
-        onSubmitPayment={submitPayment}
-        onResetPayment={resetPayment}
+        paymentMethod={paymentMethod}
+        setPaymentMethod={setPaymentMethod}
+        usdt={{
+          btcAddress: usdtDeposit.btcAddress,
+          setBtcAddress: usdtDeposit.setBtcAddress,
+          selectedCurrency: usdtDeposit.selectedCurrency,
+          selectCurrency: usdtDeposit.selectCurrency,
+          paymentData: usdtDeposit.paymentData,
+          isSubmitting: usdtDeposit.isSubmitting,
+          error: usdtDeposit.error,
+          onSubmitPayment: usdtDeposit.submitPayment,
+          onResetPayment: usdtDeposit.resetPayment,
+        }}
+        btc={{
+          btcAddress: btcDeposit.btcAddress,
+          setBtcAddress: btcDeposit.setBtcAddress,
+          paymentData: btcDeposit.paymentData,
+          isSubmitting: btcDeposit.isSubmitting,
+          error: btcDeposit.error,
+          onSubmitPayment: btcDeposit.submitPayment,
+          onResetPayment: btcDeposit.resetPayment,
+        }}
         onCopyAddress={handleCopyAddress}
         onClose={handleCloseModal}
         onForceClose={handleForceClose}
