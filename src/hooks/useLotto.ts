@@ -44,12 +44,25 @@ interface BlockMinedEvent {
   btcAddress: string;
 }
 
-interface PaymentLifecycleEvent {
+export type PaymentLifecycleStatus =
+  | 'waiting'
+  | 'confirming'
+  | 'received'
+  | 'processing'
+  | 'settled'
+  | 'expired'
+  | 'invalid';
+
+export type PaymentLifecycleProvider = 'nowpayments' | 'btcpay';
+
+export interface PaymentLifecycleEvent {
   orderId: string;
-  status: 'waiting' | 'confirming';
+  status: PaymentLifecycleStatus;
+  provider: PaymentLifecycleProvider;
 }
 
 interface UseLottoOptions {
+  // eslint-disable-next-line no-unused-vars
   onPaymentLifecycle?: (event: PaymentLifecycleEvent) => void;
 }
 
@@ -155,12 +168,64 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
 
     socketInstance.on('lotto:payment_waiting', (data: { orderId: string }) => {
       console.log('[useLotto] Payment waiting:', data);
-      onPaymentLifecycleRef.current?.({ orderId: data.orderId, status: 'waiting' });
+      onPaymentLifecycleRef.current?.({
+        orderId: data.orderId,
+        status: 'waiting',
+        provider: 'nowpayments',
+      });
     });
 
     socketInstance.on('lotto:payment_confirming', (data: { orderId: string }) => {
       console.log('[useLotto] Payment confirming:', data);
-      onPaymentLifecycleRef.current?.({ orderId: data.orderId, status: 'confirming' });
+      onPaymentLifecycleRef.current?.({
+        orderId: data.orderId,
+        status: 'confirming',
+        provider: 'nowpayments',
+      });
+    });
+
+    socketInstance.on('lotto:btc_invoice_created', (data: { orderId: string }) => {
+      console.log('[useLotto] BTC invoice created:', data);
+    });
+
+    socketInstance.on('lotto:btc_payment_received', (data: { orderId: string }) => {
+      console.log('[useLotto] BTC payment received:', data);
+      onPaymentLifecycleRef.current?.({
+        orderId: data.orderId,
+        status: 'waiting',
+        provider: 'btcpay',
+      });
+    });
+
+    socketInstance.on('lotto:btc_payment_processing', (data: { orderId: string }) => {
+      console.log('[useLotto] BTC payment processing:', data);
+      onPaymentLifecycleRef.current?.({
+        orderId: data.orderId,
+        status: 'confirming',
+        provider: 'btcpay',
+      });
+    });
+
+    socketInstance.on('lotto:btc_payment_settled', (data: { orderId: string }) => {
+      console.log('[useLotto] BTC payment settled:', data);
+    });
+
+    socketInstance.on('lotto:btc_payment_expired', (data: { orderId: string }) => {
+      console.log('[useLotto] BTC payment expired:', data);
+      onPaymentLifecycleRef.current?.({
+        orderId: data.orderId,
+        status: 'expired',
+        provider: 'btcpay',
+      });
+    });
+
+    socketInstance.on('lotto:btc_payment_invalid', (data: { orderId: string }) => {
+      console.log('[useLotto] BTC payment invalid:', data);
+      onPaymentLifecycleRef.current?.({
+        orderId: data.orderId,
+        status: 'invalid',
+        provider: 'btcpay',
+      });
     });
 
     // Handle entropy:completed events for high entropy requests
