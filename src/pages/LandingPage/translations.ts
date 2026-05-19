@@ -8,7 +8,7 @@ export const landingTranslations = {
       subtextHighlight: 'the reward finds you',
       subtextEnd: '.',
       counterLabel: 'still trying',
-      ctaStart: 'Start Playing',
+      ctaStart: 'Start Mining',
       seeLive: 'See live lottos →',
     },
     keyNumbers: [
@@ -55,7 +55,7 @@ export const landingTranslations = {
       subtextHighlight: 'la recompensa te encuentra',
       subtextEnd: '.',
       counterLabel: 'sigues intentando',
-      ctaStart: 'Empezar',
+      ctaStart: 'Comienza a Minar',
       seeLive: 'Ver lotos en vivo →',
     },
     keyNumbers: [

@@ -7,6 +7,7 @@ import { estimatedWaitMinutes } from '@/services/lotto';
 
 import { formatCompact, formatExact } from './formatAttempts';
 import { LottoOrbCanvas } from './LottoOrbCanvas';
+import { TicketHashSparkline } from './TicketHashSparkline';
 import { getOrbParams, getOrbSizeFromAttempts } from './orbMath';
 import { ticketIdToHex } from './ticketIdToColor';
 
@@ -30,6 +31,8 @@ export interface LottoOrbCardProps {
   plusUltraRemaining?: number;
   /** Queue/assigned info from the backend 202 response. */
   queueInfo?: HighEnergyQueueInfo | null;
+  /** When set, shows per-ticket activity sparkline and refetches on global hashrate pulses. */
+  hashrateRefreshToken?: number;
 
   onOpenDetails?: (_ticketId: string) => void;
   onCopyAddress?: (_address: string) => void;
@@ -98,6 +101,7 @@ export function LottoOrbCard({
   isPlusUltraPending = false,
   plusUltraRemaining = 10,
   queueInfo = null,
+  hashrateRefreshToken = 0,
 }: LottoOrbCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const prevAttemptsRef = useRef(attemptsTotal);
@@ -248,6 +252,12 @@ export function LottoOrbCard({
           />
         </div>
       </div>
+
+      <TicketHashSparkline
+        ticketId={ticketId}
+        accentColor={accentColor}
+        hashrateRefreshToken={hashrateRefreshToken}
+      />
 
       {/* Attempts — centered beneath orb */}
       <div className="px-5 pb-4 text-center">

@@ -11,7 +11,7 @@ import type { LottoTicket, SystemStats } from '@/services/lotto';
 const CYCLE_SEC = 10 * 60;
 
 function ticketToOrbProps(ticket: LottoTicket, isPlusUltraPending: boolean) {
-  const attemptsTotal = ticket.nonceTotal ?? ticket.totalAttempts ?? 0;
+  const attemptsTotal = ticket.totalAttempts ?? 0;
   const lastAttemptMs = ticket.lastAttemptAt ? new Date(ticket.lastAttemptAt).getTime() : null;
   const nextAttemptMs = lastAttemptMs != null ? lastAttemptMs + CYCLE_SEC * 1000 : null;
   const nextAttemptInSec =
@@ -50,6 +50,8 @@ export interface LottoDashboardContentProps {
   highEntropyQueued: Record<string, HighEnergyQueueInfo | null>;
   /** When true, show a skeleton card at the first grid position (payment waiting/confirming). */
   showPaymentSkeleton?: boolean;
+  /** Bumps when server broadcasts hashrate activity (sparklines refetch). */
+  hashrateRefreshToken?: number;
   onBuyTicket: () => void;
   onOpenDetails: (id: string) => void;
   onPlusUltra: (ticket: LottoTicket) => void;
@@ -62,6 +64,7 @@ export function LottoDashboardContent({
   highEntropyPending,
   highEntropyQueued,
   showPaymentSkeleton = false,
+  hashrateRefreshToken = 0,
   onBuyTicket,
   onOpenDetails,
   onPlusUltra,
@@ -77,7 +80,7 @@ export function LottoDashboardContent({
     [activeTickets]
   );
   const myTotalAttempts = activeTickets.reduce(
-    (sum, t) => sum + (t.nonceTotal ?? t.totalAttempts ?? 0),
+    (sum, t) => sum + (t.totalAttempts ?? 0),
     0
   );
 
@@ -187,6 +190,7 @@ export function LottoDashboardContent({
                     key={ticket.id}
                     {...orbProps}
                     queueInfo={queueInfo}
+                    hashrateRefreshToken={hashrateRefreshToken}
                     onOpenDetails={onOpenDetails}
                     onPlusUltra={() => onPlusUltra(ticket)}
                   />

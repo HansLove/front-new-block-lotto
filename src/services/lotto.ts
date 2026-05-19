@@ -167,6 +167,50 @@ export interface AttemptsPagination {
   hasMore: boolean;
 }
 
+export type HashrateRange = '1h' | '6h' | '24h';
+
+export interface HashrateBucket {
+  timestamp: number;
+  attempts: number;
+}
+
+export interface LiveActivityFeedItem {
+  id: string;
+  ticketId: string;
+  blockHeight: number;
+  hashShort: string;
+  nonce: string;
+  energyType: 'HIGH' | 'LOW';
+  attemptedAt: string;
+}
+
+export const fetchGlobalHashrate = async (range: HashrateRange = '1h'): Promise<HashrateBucket[]> => {
+  const response = await axios.get<HashrateBucket[]>(`${API_URL}lotto/hashrate`, {
+    ...getAuthHeaders(),
+    params: { range },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const fetchTicketHashrate = async (
+  ticketId: string,
+  range: HashrateRange = '1h'
+): Promise<HashrateBucket[]> => {
+  const response = await axios.get<HashrateBucket[]>(`${API_URL}lotto/tickets/${ticketId}/hashrate`, {
+    ...getAuthHeaders(),
+    params: { range },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const fetchRecentActivity = async (limit = 30): Promise<LiveActivityFeedItem[]> => {
+  const response = await axios.get<LiveActivityFeedItem[]>(`${API_URL}lotto/activity/recent`, {
+    ...getAuthHeaders(),
+    params: { limit },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
 /**
  * Compute estimated wait time in minutes for a queued Plus Ultra request.
  * Capped at 10 minutes.

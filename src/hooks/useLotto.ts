@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
 import {
   type AttemptsPagination,
+  fetchRecentActivity,
   fetchSystemStats,
   fetchTicketAttempts,
   fetchTicketDetail,
   fetchUserTickets,
   type InstanceHighModeResponse,
+  type LiveActivityFeedItem,
   type LottoAttempt,
   type LottoTicket,
   requestInstanceHighMode,
@@ -55,11 +57,21 @@ interface PaymentLifecycleEvent {
   status: 'waiting' | 'confirming';
 }
 
+interface ActivityFeedSocketPayload {
+  id: string;
+  ticketId: string;
+  blockHeight: number;
+  hashShort: string;
+  nonce: string;
+  energyType: 'HIGH' | 'LOW';
+  attemptedAt: string;
+}
+
+/* eslint-disable no-unused-vars -- interface method param names are for typing only */
 interface UseLottoOptions {
   onPaymentLifecycle?: (event: PaymentLifecycleEvent) => void;
 }
 
-/* eslint-disable no-unused-vars -- interface method param names are for typing only */
 interface UseLottoReturn {
   tickets: LottoTicket[];
   stats: SystemStats | null;
@@ -83,8 +95,16 @@ interface UseLottoReturn {
   highEntropyPending: Record<string, boolean>;
   /** Queue info per ticket (null when not queued/assigned). */
   highEntropyQueued: Record<string, HighEnergyQueueInfo | null>;
+  /** Bumps at most once per second when server signals hashrate/activity refresh. */
+  hashrateRefreshToken: number;
+  /** Newest-first live attempt rows for the current user (REST + socket). */
+  liveActivityFeed: LiveActivityFeedItem[];
+  refreshLiveActivityFeed: () => Promise<void>;
 }
 /* eslint-enable no-unused-vars */
+
+const LIVE_FEED_MAX = 50;
+const HASHRATE_CLIENT_THROTTLE_MS = 1000;
 
 export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
   const onPaymentLifecycleRef = useRef(options?.onPaymentLifecycle ?? null);
@@ -102,6 +122,9 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
   const [highEntropyPending, setHighEntropyPending] = useState<Record<string, boolean>>({});
   const [highEntropyQueued, setHighEntropyQueued] = useState<Record<string, HighEnergyQueueInfo | null>>({});
   const highEnergyTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [hashrateRefreshToken, setHashrateRefreshToken] = useState(0);
+  const [liveActivityFeed, setLiveActivityFeed] = useState<LiveActivityFeedItem[]>([]);
+  const lastHashrateClientBumpRef = useRef(0);
 
   // Initialize socket connection (server root; backend joins socket to user:${userId} when auth.token is valid)
   useEffect(() => {
@@ -134,7 +157,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       // Update ticket in list
       setTickets(prev =>
         prev.map(ticket =>
-          ticket.ticketId === data.ticketId
+          ticket.ticketId === data.ticketId || ticket.id === data.ticketId
             ? {
                 ...ticket,
                 totalAttempts: data.ticket.totalAttempts,
@@ -160,7 +183,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       // Update ticket and show notification
       setTickets(prev =>
         prev.map(ticket =>
-          ticket.ticketId === data.ticketId
+          ticket.ticketId === data.ticketId || ticket.id === data.ticketId
             ? {
                 ...ticket,
                 totalAttempts: ticket.totalAttempts + 1,
@@ -185,6 +208,34 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       onPaymentLifecycleRef.current?.({ orderId: data.orderId, status: 'confirming' });
     });
 
+    const bumpHashrateRefresh = () => {
+      const now = Date.now();
+      if (now - lastHashrateClientBumpRef.current < HASHRATE_CLIENT_THROTTLE_MS) return;
+      lastHashrateClientBumpRef.current = now;
+      setHashrateRefreshToken(t => t + 1);
+    };
+
+    socketInstance.on('hashrate.update', () => {
+      bumpHashrateRefresh();
+    });
+
+    socketInstance.on('lotto:activity_feed', (payload: ActivityFeedSocketPayload) => {
+      const item: LiveActivityFeedItem = {
+        id: payload.id,
+        ticketId: payload.ticketId,
+        blockHeight: payload.blockHeight,
+        hashShort: payload.hashShort ?? '',
+        nonce: payload.nonce ?? '',
+        energyType: payload.energyType === 'HIGH' ? 'HIGH' : 'LOW',
+        attemptedAt: payload.attemptedAt,
+      };
+      setLiveActivityFeed(prev => {
+        const without = prev.filter(x => x.id !== item.id);
+        return [item, ...without].slice(0, LIVE_FEED_MAX);
+      });
+      bumpHashrateRefresh();
+    });
+
     setSocket(socketInstance);
 
     return () => {
@@ -203,6 +254,12 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       const [ticketsData, statsData] = await Promise.all([fetchUserTickets(), fetchSystemStats()]);
       setTickets(ticketsData);
       setStats(statsData.stats);
+      try {
+        const feed = await fetchRecentActivity(LIVE_FEED_MAX);
+        setLiveActivityFeed(feed);
+      } catch {
+        /* non-fatal */
+      }
       setError(null);
     } catch (err: unknown) {
       console.error('[useLotto] Error loading data:', err);
@@ -345,6 +402,15 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
    * Request high entropy for a ticket (Plus Ultra). Backend responds 202 immediately
    * with assigned/queued status; result arrives later via lotto:attempt socket event.
    */
+  const refreshLiveActivityFeed = useCallback(async () => {
+    try {
+      const feed = await fetchRecentActivity(LIVE_FEED_MAX);
+      setLiveActivityFeed(feed);
+    } catch (err: unknown) {
+      console.error('[useLotto] refreshLiveActivityFeed:', err);
+    }
+  }, []);
+
   const requestHighEntropyAttempt = useCallback(async (ticket: LottoTicket): Promise<InstanceHighModeResponse> => {
     setHighEntropyPending(prev => ({ ...prev, [ticket.id]: true }));
     setHighEntropyQueued(prev => ({ ...prev, [ticket.id]: null }));
@@ -388,5 +454,8 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     requestHighEntropyAttempt,
     highEntropyPending,
     highEntropyQueued,
+    hashrateRefreshToken,
+    liveActivityFeed,
+    refreshLiveActivityFeed,
   };
 };

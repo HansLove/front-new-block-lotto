@@ -8,6 +8,8 @@ import { toast, ToastContainer } from 'react-toastify';
 
 import { BuyTicketModal } from '@/components/lotto/BuyTicketModal';
 import { formatExact } from '@/components/lotto/formatAttempts';
+import { GlobalHashrateChart } from '@/components/lotto/GlobalHashrateChart';
+import { LiveAttemptFeed } from '@/components/lotto/LiveAttemptFeed';
 import { LottoDashboardContent } from '@/components/lotto/LottoDashboardContent';
 import { type PaymentLifecycleStatus } from '@/components/lotto/PaymentStatusPipeline';
 import { useAuth } from '@/hooks/useLogInHook';
@@ -29,7 +31,7 @@ function useLottoDisplayFonts() {
   }, []);
 }
 
-export default function LottoDashboardPage() {
+export default function DashboardPage() {
   useLottoDisplayFonts();
 
   const navigate = useNavigate();
@@ -59,7 +61,19 @@ export default function LottoDashboardPage() {
   const orderIdRef = useRef(orderId);
   orderIdRef.current = orderId;
 
-  const { tickets, stats, loading, refreshTickets, refreshTicketsSilent, addTicket, requestHighEntropyAttempt, highEntropyPending, highEntropyQueued } = useLotto({
+  const {
+    tickets,
+    stats,
+    loading,
+    refreshTickets,
+    refreshTicketsSilent,
+    addTicket,
+    requestHighEntropyAttempt,
+    highEntropyPending,
+    highEntropyQueued,
+    hashrateRefreshToken,
+    liveActivityFeed,
+  } = useLotto({
     onPaymentLifecycle: useCallback((event: { orderId: string; status: 'waiting' | 'confirming' }) => {
       if (event.orderId !== orderIdRef.current) return;
       setPaymentStatus(event.status);
@@ -210,7 +224,7 @@ export default function LottoDashboardPage() {
     t => t.status === 'active' && new Date(t.validUntil) > new Date()
   );
   const myTotalAttempts = activeTickets.reduce(
-    (sum, t) => sum + (t.nonceTotal ?? t.totalAttempts ?? 0),
+    (sum, t) => sum + (t.totalAttempts ?? 0),
     0
   );
 
@@ -287,6 +301,19 @@ export default function LottoDashboardPage() {
         </div>
       </div>
 
+      <div className="border-b border-white/[0.04]">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+            <div className="lg:col-span-2">
+              <GlobalHashrateChart hashrateRefreshToken={hashrateRefreshToken} accentColor="#2dd4bf" />
+            </div>
+            <div className="lg:col-span-1">
+              <LiveAttemptFeed items={liveActivityFeed} className="min-h-[280px] lg:min-h-0" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <LottoDashboardContent
         loading={loading}
         tickets={tickets}
@@ -294,6 +321,7 @@ export default function LottoDashboardPage() {
         highEntropyPending={highEntropyPending}
         highEntropyQueued={highEntropyQueued}
         showPaymentSkeleton={showPaymentSkeleton}
+        hashrateRefreshToken={hashrateRefreshToken}
         onBuyTicket={() => setShowBuyModal(true)}
         onOpenDetails={id => navigate(`/lotto/${id}`)}
         onPlusUltra={handlePlusUltra}

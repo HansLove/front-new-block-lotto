@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AttemptsOverTimeChart } from '@/components/lotto/AttemptsOverTimeChart';
 import { LottoOrbCanvas } from '@/components/lotto/LottoOrbCanvas';
 import { getOrbParams, getOrbSizeFromAttempts } from '@/components/lotto/orbMath';
+import { TicketHashTimeline } from '@/components/lotto/TicketHashTimeline';
 import { ticketIdToHex } from '@/components/lotto/ticketIdToColor';
 import { useLotto } from '@/hooks/useLotto';
 import type { LottoAttempt, LottoTicket } from '@/services/lotto';
@@ -23,6 +24,7 @@ export default function TicketDetail() {
     highEntropyPending,
     highEntropyQueued,
     refreshTicketsSilent,
+    hashrateRefreshToken,
   } = useLotto();
   const [ticket, setTicket] = useState<LottoTicket | null>(null);
   const [attempts, setAttempts] = useState<LottoAttempt[]>([]);
@@ -291,6 +293,27 @@ export default function TicketDetail() {
               );
             })()}
           </div>
+        </motion.div>
+
+        {/* Hash distribution: attempts per minute */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-8"
+        >
+          <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-white/35">
+            Hash distribution
+          </h3>
+          <p className="mb-3 text-xs text-white/25">
+            Attempts per minute on this ticket (raw and rolling average). Amber dots mark minutes with Plus Ultra.
+          </p>
+          <TicketHashTimeline
+            ticketId={ticket.id}
+            accentColor={accentColor}
+            attempts={attempts}
+            hashrateRefreshToken={hashrateRefreshToken}
+          />
         </motion.div>
 
         {/* Chart: accumulation over time */}

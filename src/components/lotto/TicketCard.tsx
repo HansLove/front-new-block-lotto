@@ -30,7 +30,7 @@ export const TicketCard = ({ ticket, onClick, onPlusUltra, isPlusUltraPending = 
   // Extract lotto number from ticketId (assuming format like "Lotto #142" or similar)
   const lottoNumber = ticket.ticketId?.replace(/[^0-9]/g, '') || ticket.id?.slice(-3) || '---';
 
-  const totalAttemptsDisplay = ticket.nonceTotal ?? ticket.totalAttempts ?? 0;
+  const totalAttemptsDisplay = ticket.totalAttempts ?? 0;
   const nowMs = Date.now();
   const validUntilMs = ticket.validUntil ? new Date(ticket.validUntil).getTime() : 0;
   const expiresInDays =
@@ -56,7 +56,7 @@ export const TicketCard = ({ ticket, onClick, onPlusUltra, isPlusUltraPending = 
         )}
       </div>
 
-      {/* Total Attempts (nonce_total) - Large Display */}
+      {/* Total Attempts - Large Display */}
       <div className="mb-4">
         <div className="text-4xl font-bold text-white">{totalAttemptsDisplay.toLocaleString()}</div>
         <div className="text-sm text-white/25">Total Attempts</div>
