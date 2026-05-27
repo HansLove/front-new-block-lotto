@@ -7,8 +7,8 @@ import { estimatedWaitMinutes } from '@/services/lotto';
 
 import { formatCompact, formatExact } from './formatAttempts';
 import { LottoOrbCanvas } from './LottoOrbCanvas';
-import { TicketHashSparkline } from './TicketHashSparkline';
 import { getOrbParams, getOrbSizeFromAttempts } from './orbMath';
+import { TicketHashSparkline } from './TicketHashSparkline';
 import { ticketIdToHex } from './ticketIdToColor';
 
 export type LottoOrbCardStatus = 'ACTIVE' | 'EXPIRED' | 'PAUSED' | 'CANCELLED' | 'MINING';
@@ -18,7 +18,8 @@ export interface LottoOrbCardProps {
   lottoNumber?: string | number;
   btcAddress: string;
   status: LottoOrbCardStatus;
-  attemptsTotal: number;
+  hashesTotal: number;
+  blocksTotal: number;
   attemptsToday?: number;
   nextAttemptInSec: number;
   lastAttemptAt?: string | number | Date;
@@ -87,7 +88,8 @@ export function LottoOrbCard({
   ticketId,
   btcAddress,
   status,
-  attemptsTotal,
+  hashesTotal,
+  blocksTotal,
   attemptsToday,
   nextAttemptInSec,
   lastAttemptAt,
@@ -104,17 +106,17 @@ export function LottoOrbCard({
   hashrateRefreshToken = 0,
 }: LottoOrbCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const prevAttemptsRef = useRef(attemptsTotal);
+  const prevHashesRef = useRef(hashesTotal);
   const [visible, setVisible] = useState(true);
   const [countdown, setCountdown] = useState(nextAttemptInSec);
   const [recentDelta, setRecentDelta] = useState(0);
 
   useEffect(() => {
-    if (attemptsTotal > prevAttemptsRef.current) {
-      setRecentDelta(attemptsTotal - prevAttemptsRef.current);
-      prevAttemptsRef.current = attemptsTotal;
+    if (hashesTotal > prevHashesRef.current) {
+      setRecentDelta(hashesTotal - prevHashesRef.current);
+      prevHashesRef.current = hashesTotal;
     }
-  }, [attemptsTotal]);
+  }, [hashesTotal]);
 
   useEffect(() => {
     if (recentDelta <= 0) return;
@@ -123,9 +125,9 @@ export function LottoOrbCard({
   }, [recentDelta]);
 
   const plusUltraAvailable = import.meta.env.VITE_PLUS_ULTRA_AVAILABLE !== '0';
-  const orbParams = useMemo(() => getOrbParams(attemptsTotal, isPlusUltra), [attemptsTotal, isPlusUltra]);
+  const orbParams = useMemo(() => getOrbParams(hashesTotal, isPlusUltra), [hashesTotal, isPlusUltra]);
   const accentColor = useMemo(() => ticketIdToHex(ticketId), [ticketId]);
-  const orbSize = useMemo(() => getOrbSizeFromAttempts(attemptsTotal), [attemptsTotal]);
+  const orbSize = useMemo(() => getOrbSizeFromAttempts(hashesTotal), [hashesTotal]);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -270,11 +272,11 @@ export function LottoOrbCard({
             letterSpacing: '-0.02em',
           }}
         >
-          {formatExact(attemptsTotal)}
+          {formatExact(hashesTotal)}
         </div>
 
         <div className="mt-1 flex items-center justify-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-white/20">Total Attempts</span>
+          <span className="text-[10px] uppercase tracking-[0.18em] text-white/20">Total Hashes</span>
           {recentDelta > 0 && (
             <motion.span
               initial={{ opacity: 0, y: 4 }}
@@ -286,6 +288,13 @@ export function LottoOrbCard({
               +{formatCompact(recentDelta)}
             </motion.span>
           )}
+        </div>
+
+        <div
+          className="mt-1 text-[10px] uppercase tracking-[0.16em] text-white/28"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+        >
+          Blocks: {formatExact(blocksTotal)}
         </div>
 
         <div className="mt-0.5 text-[10px] text-white/20">

@@ -92,14 +92,14 @@ function mapEventToLottoAttempt(row: Record<string, unknown>): LottoAttempt {
 }
 
 export const fetchUserTickets = async (): Promise<LottoTicket[]> => {
-  const response = await axios.get(`${API_URL}instances`, getAuthHeaders());
+  const response = await axios.get(`${API_URL}lotto/instances`, getAuthHeaders());
   const list = Array.isArray(response.data) ? response.data : [];
   return list.map((row: Record<string, unknown>) => mapInstanceToLottoTicket(row));
 };
 
 export const createTicket = async (data: CreateTicketRequest): Promise<LottoTicket> => {
   const response = await axios.post(
-    `${API_URL}instances`,
+    `${API_URL}lotto/instances`,
     { btc_address: data.btcAddress, valid_days: data.validDays ?? 30 },
     getAuthHeaders()
   );
@@ -118,7 +118,7 @@ export const fetchTicketAttempts = async (
   limit = 50,
   skip = 0
 ): Promise<{ attempts: LottoAttempt[]; pagination: AttemptsPagination }> => {
-  const response = await axios.get(`${API_URL}instances/${ticketId}/events`, {
+  const response = await axios.get(`${API_URL}lotto/instances/${ticketId}/events`, {
     ...getAuthHeaders(),
     params: { limit, skip },
   });
@@ -141,7 +141,7 @@ export const fetchSystemStats = async (): Promise<{
     attemptedAt: string;
   }>;
 }> => {
-  const response = await axios.get(`${API_URL}status/stats`, getAuthHeaders());
+  const response = await axios.get(`${API_URL}lotto/status/stats`, getAuthHeaders());
   const stats = response.data?.stats ?? response.data;
   return {
     stats: {
@@ -229,7 +229,7 @@ export const requestInstanceHighMode = async (
   instanceId: string
 ): Promise<InstanceHighModeResponse> => {
   const response = await axios.post<InstanceHighModeResponse>(
-    `${API_URL}instances/${instanceId}/high`,
+    `${API_URL}lotto/instances/${instanceId}/high`,
     {},
     getAuthHeaders()
   );
@@ -245,7 +245,7 @@ export const redeemPromoCode = async (
   btcAddress: string
 ): Promise<LottoTicket> => {
   const response = await axios.post(
-    `${API_URL}promo/redeem`,
+    `${API_URL}lotto/promo/redeem`,
     { code: code.trim(), btc_address: btcAddress.trim() },
     getAuthHeaders()
   );
