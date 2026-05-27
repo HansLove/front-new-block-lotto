@@ -134,7 +134,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       setLoading(false);
       return;
     }
-    const socketBase = API_URL.replace(/\/api\/?$/, '') || API_URL;
+    const socketBase = API_URL.replace(/\/api(?:\/v1)?\/?$/, '') || API_URL;
 
     const socketInstance = io(socketBase, {
       transports: ['polling', 'websocket'],
