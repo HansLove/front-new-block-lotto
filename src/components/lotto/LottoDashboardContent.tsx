@@ -11,7 +11,8 @@ import type { LottoTicket, SystemStats } from '@/services/lotto';
 const CYCLE_SEC = 10 * 60;
 
 function ticketToOrbProps(ticket: LottoTicket, isPlusUltraPending: boolean) {
-  const attemptsTotal = ticket.totalAttempts ?? 0;
+  const blocksTotal = ticket.totalAttempts ?? 0;
+  const hashesTotal = ticket.nonceTotal ?? blocksTotal;
   const lastAttemptMs = ticket.lastAttemptAt ? new Date(ticket.lastAttemptAt).getTime() : null;
   const nextAttemptMs = lastAttemptMs != null ? lastAttemptMs + CYCLE_SEC * 1000 : null;
   const nextAttemptInSec =
@@ -30,7 +31,8 @@ function ticketToOrbProps(ticket: LottoTicket, isPlusUltraPending: boolean) {
     ticketId: ticket.id,
     btcAddress: ticket.btcAddress ?? '',
     status,
-    attemptsTotal,
+    hashesTotal,
+    blocksTotal,
     nextAttemptInSec,
     lastAttemptAt: ticket.lastAttemptAt ?? undefined,
     expiresAt: ticket.validUntil,
