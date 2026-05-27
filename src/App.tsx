@@ -23,7 +23,8 @@ const TermsAndConditions = lazy(() => import('./pages/Footer/TermsAndConditions'
 const PrivacyPolicy = lazy(() => import('./pages/Footer/PrivacyPolicy'));
 
 const ApiKeys = lazy(() => import('./pages/CaosAPI/ApiKeys'));
-const LottoDashboardPage = lazy(() => import('./pages/lotto/LottoDashboardPage'));
+const DashboardPage = lazy(() => import('./pages/lotto/DashboardPage'));
+const TicketActivityPage = lazy(() => import('./pages/lotto/TicketActivityPage'));
 const TicketDetail = lazy(() => import('./pages/lotto/TicketDetail'));
 // Base layout component that provides consistent spacing and structure
 
@@ -82,7 +83,8 @@ function App() {
           <Route path="/api-key" element={<ApiKeys />} />
           {/* Lotto routes — dark full-bleed layout */}
           <Route element={<DarkLayout />}>
-            <Route path="/lotto" element={<LottoDashboardPage />} />
+            <Route path="/lotto" element={<DashboardPage />} />
+            <Route path="/lotto/:ticketId/activity" element={<TicketActivityPage />} />
             <Route path="/lotto/:ticketId" element={<TicketDetail />} />
           </Route>
 

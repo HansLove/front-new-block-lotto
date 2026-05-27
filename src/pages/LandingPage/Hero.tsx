@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, ChevronDown, Plus, Trophy, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import {  useNavigate } from 'react-router-dom';
 
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useLogInHook';
@@ -206,9 +206,7 @@ const Hero = () => {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </motion.button>
 
-            <Link to="/lotto" className="text-sm text-white/40 transition-colors hover:text-white/70">
-              {t.hero.seeLive}
-            </Link>
+           
           </motion.div>
         </div>
 

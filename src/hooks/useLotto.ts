@@ -1,19 +1,27 @@
+import axios from 'axios';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
-import type { EntropyCompleted } from '@/services/entropy';
 import {
+  type AttemptsPagination,
+  fetchRecentActivity,
   fetchSystemStats,
   fetchTicketAttempts,
   fetchTicketDetail,
   fetchUserTickets,
   type InstanceHighModeResponse,
+  type LiveActivityFeedItem,
   type LottoAttempt,
   type LottoTicket,
   requestInstanceHighMode,
   type SystemStats,
 } from '@/services/lotto';
 import { API_URL } from '@/utils/Rutes';
+
+export interface HighEnergyQueueInfo {
+  status: 'assigned' | 'queued';
+  queuePosition: number;
+}
 
 interface LottoAttemptEvent {
   ticketId: string;
@@ -61,12 +69,22 @@ export interface PaymentLifecycleEvent {
   provider: PaymentLifecycleProvider;
 }
 
+interface ActivityFeedSocketPayload {
+  id: string;
+  ticketId: string;
+  blockHeight: number;
+  hashShort: string;
+  nonce: string;
+  energyType: 'HIGH' | 'LOW';
+  attemptedAt: string;
+}
+
+/* eslint-disable no-unused-vars -- interface method param names are for typing only */
 interface UseLottoOptions {
   // eslint-disable-next-line no-unused-vars
   onPaymentLifecycle?: (event: PaymentLifecycleEvent) => void;
 }
 
-/* eslint-disable no-unused-vars -- interface method param names are for typing only */
 interface UseLottoReturn {
   tickets: LottoTicket[];
   stats: SystemStats | null;
@@ -84,16 +102,29 @@ interface UseLottoReturn {
     ticketId: string,
     limit?: number,
     skip?: number
-  ) => Promise<{ attempts: LottoAttempt[]; pagination: any } | null>;
+  ) => Promise<{ attempts: LottoAttempt[]; pagination: AttemptsPagination } | null>;
   requestHighEntropyAttempt: (ticket: LottoTicket) => Promise<InstanceHighModeResponse>;
+  /** True while a HIGH energy request is active (assigned or queued) for a ticket. */
   highEntropyPending: Record<string, boolean>;
-  highEntropyResults: Record<string, EntropyCompleted | null>;
+  /** Queue info per ticket (null when not queued/assigned). */
+  highEntropyQueued: Record<string, HighEnergyQueueInfo | null>;
+  /** Bumps at most once per second when server signals hashrate/activity refresh. */
+  hashrateRefreshToken: number;
+  /** Newest-first live attempt rows for the current user (REST + socket). */
+  liveActivityFeed: LiveActivityFeedItem[];
+  refreshLiveActivityFeed: () => Promise<void>;
 }
 /* eslint-enable no-unused-vars */
+
+const LIVE_FEED_MAX = 50;
+const HASHRATE_CLIENT_THROTTLE_MS = 1000;
 
 export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
   const onPaymentLifecycleRef = useRef(options?.onPaymentLifecycle ?? null);
   onPaymentLifecycleRef.current = options?.onPaymentLifecycle ?? null;
+
+  // Kept in a ref so the socket effect (deps: []) always calls the latest version
+  const refreshSilentRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
   const [tickets, setTickets] = useState<LottoTicket[]>([]);
   const [stats, setStats] = useState<SystemStats | null>(null);
@@ -102,7 +133,11 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [highEntropyPending, setHighEntropyPending] = useState<Record<string, boolean>>({});
-  const [highEntropyResults, setHighEntropyResults] = useState<Record<string, EntropyCompleted | null>>({});
+  const [highEntropyQueued, setHighEntropyQueued] = useState<Record<string, HighEnergyQueueInfo | null>>({});
+  const highEnergyTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [hashrateRefreshToken, setHashrateRefreshToken] = useState(0);
+  const [liveActivityFeed, setLiveActivityFeed] = useState<LiveActivityFeedItem[]>([]);
+  const lastHashrateClientBumpRef = useRef(0);
 
   // Initialize socket connection (server root; backend joins socket to user:${userId} when auth.token is valid)
   useEffect(() => {
@@ -112,7 +147,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       setLoading(false);
       return;
     }
-    const socketBase = API_URL.replace(/\/api\/?$/, '') || API_URL;
+    const socketBase = API_URL.replace(/\/api(?:\/v1)?\/?$/, '') || API_URL;
 
     const socketInstance = io(socketBase, {
       transports: ['polling', 'websocket'],
@@ -135,7 +170,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       // Update ticket in list
       setTickets(prev =>
         prev.map(ticket =>
-          ticket.ticketId === data.ticketId
+          ticket.ticketId === data.ticketId || ticket.id === data.ticketId
             ? {
                 ...ticket,
                 totalAttempts: data.ticket.totalAttempts,
@@ -144,6 +179,16 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
             : ticket
         )
       );
+      // Clear HIGH energy pending/queued state when a HIGH attempt completes
+      if (data.attempt.stars === 5) {
+        setHighEntropyPending(prev => ({ ...prev, [data.ticketId]: false }));
+        setHighEntropyQueued(prev => ({ ...prev, [data.ticketId]: null }));
+        const timeoutId = highEnergyTimeoutsRef.current[data.ticketId];
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          delete highEnergyTimeoutsRef.current[data.ticketId];
+        }
+      }
     });
 
     socketInstance.on('lotto:block_mined', (data: BlockMinedEvent) => {
@@ -151,7 +196,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       // Update ticket and show notification
       setTickets(prev =>
         prev.map(ticket =>
-          ticket.ticketId === data.ticketId
+          ticket.ticketId === data.ticketId || ticket.id === data.ticketId
             ? {
                 ...ticket,
                 totalAttempts: ticket.totalAttempts + 1,
@@ -163,7 +208,7 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
 
     socketInstance.on('lotto:ticket_created', (_data: { instanceId: string; btcAddress: string }) => {
       console.log('[useLotto] New ticket created:', _data);
-      loadTickets();
+      refreshSilentRef.current();
     });
 
     socketInstance.on('lotto:payment_waiting', (data: { orderId: string }) => {
@@ -228,33 +273,42 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       });
     });
 
-    // Handle entropy:completed events for high entropy requests
-    socketInstance.on('entropy:completed', (data: EntropyCompleted) => {
-      console.log('[useLotto] High entropy completed:', data);
+    const bumpHashrateRefresh = () => {
+      const now = Date.now();
+      if (now - lastHashrateClientBumpRef.current < HASHRATE_CLIENT_THROTTLE_MS) return;
+      lastHashrateClientBumpRef.current = now;
+      setHashrateRefreshToken(t => t + 1);
+    };
 
-      // Find the ticket that matches this address
-      setTickets(prev =>
-        prev.map(ticket => {
-          if (ticket.btcAddress === data.address) {
-            // Update ticket with new attempt
-            setHighEntropyPending(prevPending => ({ ...prevPending, [ticket.ticketId]: false }));
-            setHighEntropyResults(prevResults => ({ ...prevResults, [ticket.ticketId]: data }));
+    socketInstance.on('hashrate.update', () => {
+      bumpHashrateRefresh();
+    });
 
-            return {
-              ...ticket,
-              totalAttempts: ticket.totalAttempts + 1,
-              lastAttemptAt: new Date().toISOString(),
-            };
-          }
-          return ticket;
-        })
-      );
+    socketInstance.on('lotto:activity_feed', (payload: ActivityFeedSocketPayload) => {
+      const item: LiveActivityFeedItem = {
+        id: payload.id,
+        ticketId: payload.ticketId,
+        blockHeight: payload.blockHeight,
+        hashShort: payload.hashShort ?? '',
+        nonce: payload.nonce ?? '',
+        energyType: payload.energyType === 'HIGH' ? 'HIGH' : 'LOW',
+        attemptedAt: payload.attemptedAt,
+      };
+      setLiveActivityFeed(prev => {
+        const without = prev.filter(x => x.id !== item.id);
+        return [item, ...without].slice(0, LIVE_FEED_MAX);
+      });
+      bumpHashrateRefresh();
     });
 
     setSocket(socketInstance);
 
     return () => {
       socketInstance.disconnect();
+      for (const timeoutId of Object.values(highEnergyTimeoutsRef.current)) {
+        clearTimeout(timeoutId);
+      }
+      highEnergyTimeoutsRef.current = {};
     };
   }, []);
 
@@ -265,10 +319,19 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
       const [ticketsData, statsData] = await Promise.all([fetchUserTickets(), fetchSystemStats()]);
       setTickets(ticketsData);
       setStats(statsData.stats);
+      try {
+        const feed = await fetchRecentActivity(LIVE_FEED_MAX);
+        setLiveActivityFeed(feed);
+      } catch {
+        /* non-fatal */
+      }
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[useLotto] Error loading data:', err);
-      setError(err.response?.data?.error || 'Failed to load lotto data');
+      const message = axios.isAxiosError(err)
+        ? (err.response?.data?.error ?? 'Failed to load lotto data')
+        : 'Failed to load lotto data';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -292,6 +355,12 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     []
   );
 
+  const fetchAndMergeTickets = useCallback(async () => {
+    const [ticketsData, statsData] = await Promise.all([fetchUserTickets(), fetchSystemStats()]);
+    setTickets(prev => mergeTicketsPreservingOrder(prev, ticketsData));
+    setStats(statsData.stats);
+  }, [mergeTicketsPreservingOrder]);
+
   // Silent refresh: update data in background without loading spinner (smooth, no reload)
   const lastSilentRefreshRef = useRef<number>(0);
   const REFRESH_THROTTLE_MS = 5000; // min 5s between silent refreshes
@@ -301,24 +370,21 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     if (now - lastSilentRefreshRef.current < REFRESH_THROTTLE_MS) return;
     lastSilentRefreshRef.current = now;
     try {
-      const [ticketsData, statsData] = await Promise.all([fetchUserTickets(), fetchSystemStats()]);
-      setTickets(prev => mergeTicketsPreservingOrder(prev, ticketsData));
-      setStats(statsData.stats);
-    } catch (err: any) {
+      await fetchAndMergeTickets();
+    } catch (err: unknown) {
       console.error('[useLotto] Silent refresh failed:', err);
     }
-  }, [mergeTicketsPreservingOrder]);
+  }, [fetchAndMergeTickets]);
+  refreshSilentRef.current = refreshSilent;
 
   /** Silent refresh without throttle (e.g. after Plus Ultra) so UI updates immediately. */
   const refreshTicketsSilent = useCallback(async () => {
     try {
-      const [ticketsData, statsData] = await Promise.all([fetchUserTickets(), fetchSystemStats()]);
-      setTickets(prev => mergeTicketsPreservingOrder(prev, ticketsData));
-      setStats(statsData.stats);
-    } catch (err: any) {
+      await fetchAndMergeTickets();
+    } catch (err: unknown) {
       console.error('[useLotto] Silent refresh failed:', err);
     }
-  }, [mergeTicketsPreservingOrder]);
+  }, [fetchAndMergeTickets]);
 
   const addTicket = useCallback((ticket: LottoTicket) => {
     setTickets(prev => {
@@ -377,17 +443,17 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
   const getTicketDetail = useCallback(async (ticketId: string): Promise<LottoTicket | null> => {
     try {
       return await fetchTicketDetail(ticketId);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[useLotto] Error fetching ticket detail:', err);
       return null;
     }
   }, []);
 
   const getTicketAttempts = useCallback(
-    async (ticketId: string, limit = 50, skip = 0): Promise<{ attempts: LottoAttempt[]; pagination: any } | null> => {
+    async (ticketId: string, limit = 50, skip = 0): Promise<{ attempts: LottoAttempt[]; pagination: AttemptsPagination } | null> => {
       try {
         return await fetchTicketAttempts(ticketId, limit, skip);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[useLotto] Error fetching ticket attempts:', err);
         return null;
       }
@@ -395,22 +461,45 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     []
   );
 
+  const HIGH_ENERGY_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+
   /**
-   * Request high entropy for a ticket (Plus Ultra). Calls backend to get computational
-   * energy from Bitcoin mining and add the result to total attempts.
-   * @param ticket - The lotto ticket (instance)
-   * @returns Promise with API response when the request is accepted
+   * Request high entropy for a ticket (Plus Ultra). Backend responds 202 immediately
+   * with assigned/queued status; result arrives later via lotto:attempt socket event.
    */
+  const refreshLiveActivityFeed = useCallback(async () => {
+    try {
+      const feed = await fetchRecentActivity(LIVE_FEED_MAX);
+      setLiveActivityFeed(feed);
+    } catch (err: unknown) {
+      console.error('[useLotto] refreshLiveActivityFeed:', err);
+    }
+  }, []);
+
   const requestHighEntropyAttempt = useCallback(async (ticket: LottoTicket): Promise<InstanceHighModeResponse> => {
-    setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: true }));
-    setHighEntropyResults(prev => ({ ...prev, [ticket.ticketId]: null }));
+    setHighEntropyPending(prev => ({ ...prev, [ticket.id]: true }));
+    setHighEntropyQueued(prev => ({ ...prev, [ticket.id]: null }));
 
     try {
       const result = await requestInstanceHighMode(ticket.id);
-      setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: false }));
+      setHighEntropyQueued(prev => ({
+        ...prev,
+        [ticket.id]: { status: result.status, queuePosition: result.queuePosition },
+      }));
+
+      // Safety timeout: clear pending state if no result arrives within 10 minutes
+      const existingTimeout = highEnergyTimeoutsRef.current[ticket.id];
+      if (existingTimeout) clearTimeout(existingTimeout);
+      highEnergyTimeoutsRef.current[ticket.id] = setTimeout(() => {
+        setHighEntropyPending(prev => ({ ...prev, [ticket.id]: false }));
+        setHighEntropyQueued(prev => ({ ...prev, [ticket.id]: null }));
+        delete highEnergyTimeoutsRef.current[ticket.id];
+      }, HIGH_ENERGY_TIMEOUT_MS);
+
       return result;
-    } catch (err: any) {
-      setHighEntropyPending(prev => ({ ...prev, [ticket.ticketId]: false }));
+    } catch (err: unknown) {
+      setHighEntropyPending(prev => ({ ...prev, [ticket.id]: false }));
+      setHighEntropyQueued(prev => ({ ...prev, [ticket.id]: null }));
       throw err;
     }
   }, []);
@@ -429,6 +518,9 @@ export const useLotto = (options?: UseLottoOptions): UseLottoReturn => {
     getTicketAttempts,
     requestHighEntropyAttempt,
     highEntropyPending,
-    highEntropyResults,
+    highEntropyQueued,
+    hashrateRefreshToken,
+    liveActivityFeed,
+    refreshLiveActivityFeed,
   };
 };

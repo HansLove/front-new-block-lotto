@@ -5,19 +5,21 @@ import { useMemo } from 'react';
 import { formatExact } from '@/components/lotto/formatAttempts';
 import { LottoOrbCard, type LottoOrbCardStatus } from '@/components/lotto/LottoOrbCard';
 import { PaymentTicketSkeleton } from '@/components/lotto/PaymentTicketSkeleton';
+import type { HighEnergyQueueInfo } from '@/hooks/useLotto';
 import type { LottoTicket, SystemStats } from '@/services/lotto';
 
 const CYCLE_SEC = 10 * 60;
 
 function ticketToOrbProps(ticket: LottoTicket, isPlusUltraPending: boolean) {
-  const attemptsTotal = ticket.nonceTotal ?? ticket.totalAttempts ?? 0;
+  const blocksTotal = ticket.totalAttempts ?? 0;
+  const hashesTotal = ticket.nonceTotal ?? blocksTotal;
   const lastAttemptMs = ticket.lastAttemptAt ? new Date(ticket.lastAttemptAt).getTime() : null;
   const nextAttemptMs = lastAttemptMs != null ? lastAttemptMs + CYCLE_SEC * 1000 : null;
   const nextAttemptInSec =
     nextAttemptMs != null ? Math.max(0, Math.round((nextAttemptMs - Date.now()) / 1000)) : CYCLE_SEC;
 
-  const isMining = !ticket.lastAttemptAt;
-  const status: LottoOrbCardStatus = isMining
+  const isFirstRunPending = !ticket.lastAttemptAt;
+  const status: LottoOrbCardStatus = isFirstRunPending
     ? 'MINING'
     : ticket.status === 'active'
       ? 'ACTIVE'
@@ -29,11 +31,12 @@ function ticketToOrbProps(ticket: LottoTicket, isPlusUltraPending: boolean) {
     ticketId: ticket.id,
     btcAddress: ticket.btcAddress ?? '',
     status,
-    attemptsTotal,
+    hashesTotal,
+    blocksTotal,
     nextAttemptInSec,
     lastAttemptAt: ticket.lastAttemptAt ?? undefined,
     expiresAt: ticket.validUntil,
-    isMining,
+    isMining: isFirstRunPending,
     isPlusUltra: isPlusUltraPending,
     stars: ticket.stars ?? 5,
     isPlusUltraPending,
@@ -46,8 +49,11 @@ export interface LottoDashboardContentProps {
   tickets: LottoTicket[];
   stats: SystemStats | null;
   highEntropyPending: Record<string, boolean>;
+  highEntropyQueued: Record<string, HighEnergyQueueInfo | null>;
   /** When true, show a skeleton card at the first grid position (payment waiting/confirming). */
   showPaymentSkeleton?: boolean;
+  /** Bumps when server broadcasts hashrate activity (sparklines refetch). */
+  hashrateRefreshToken?: number;
   onBuyTicket: () => void;
   onOpenDetails: (id: string) => void;
   onPlusUltra: (ticket: LottoTicket) => void;
@@ -58,7 +64,9 @@ export function LottoDashboardContent({
   tickets,
   stats,
   highEntropyPending,
+  highEntropyQueued,
   showPaymentSkeleton = false,
+  hashrateRefreshToken = 0,
   onBuyTicket,
   onOpenDetails,
   onPlusUltra,
@@ -74,7 +82,7 @@ export function LottoDashboardContent({
     [activeTickets]
   );
   const myTotalAttempts = activeTickets.reduce(
-    (sum, t) => sum + (t.nonceTotal ?? t.totalAttempts ?? 0),
+    (sum, t) => sum + (t.totalAttempts ?? 0),
     0
   );
 
@@ -177,11 +185,14 @@ export function LottoDashboardContent({
               {showPaymentSkeleton && <PaymentTicketSkeleton />}
               {sortedActiveTickets.map(ticket => {
                 const pending = highEntropyPending[ticket.id] ?? false;
+                const queueInfo = highEntropyQueued[ticket.id] ?? null;
                 const orbProps = ticketToOrbProps(ticket, pending);
                 return (
                   <LottoOrbCard
                     key={ticket.id}
                     {...orbProps}
+                    queueInfo={queueInfo}
+                    hashrateRefreshToken={hashrateRefreshToken}
                     onOpenDetails={onOpenDetails}
                     onPlusUltra={() => onPlusUltra(ticket)}
                   />

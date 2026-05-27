@@ -8,6 +8,8 @@ import { toast, ToastContainer } from 'react-toastify';
 
 import { BuyTicketModal } from '@/components/lotto/BuyTicketModal';
 import { formatExact } from '@/components/lotto/formatAttempts';
+import { GlobalHashrateChart } from '@/components/lotto/GlobalHashrateChart';
+import { LiveAttemptFeed } from '@/components/lotto/LiveAttemptFeed';
 import { LottoDashboardContent } from '@/components/lotto/LottoDashboardContent';
 import { type PaymentMethod } from '@/components/lotto/PaymentMethodTabs';
 import { type PaymentLifecycleStatus } from '@/components/lotto/PaymentStatusPipeline';
@@ -16,7 +18,7 @@ import { type PaymentLifecycleEvent, useLotto } from '@/hooks/useLotto';
 import { useLottoBtcDeposit } from '@/hooks/useLottoBtcDeposit';
 import { useLottoDeposit } from '@/hooks/useLottoDeposit';
 import type { LottoTicket } from '@/services/lotto';
-import { redeemPromoCode } from '@/services/lotto';
+import { estimatedWaitMinutes, redeemPromoCode } from '@/services/lotto';
 import { isValidBitcoinAddress } from '@/utils/bitcoinAddress';
 
 function useLottoDisplayFonts() {
@@ -31,7 +33,7 @@ function useLottoDisplayFonts() {
   }, []);
 }
 
-export default function LottoDashboardPage() {
+export default function DashboardPage() {
   useLottoDisplayFonts();
 
   const navigate = useNavigate();
@@ -48,37 +50,51 @@ export default function LottoDashboardPage() {
   const usdtDeposit = useLottoDeposit();
   const btcDeposit = useLottoBtcDeposit();
 
-  const activeOrderId =
-    paymentMethod === 'btc' ? btcDeposit.orderId : usdtDeposit.orderId;
+  const activeOrderId = paymentMethod === 'btc' ? btcDeposit.orderId : usdtDeposit.orderId;
   const activeOrderIdRef = useRef(activeOrderId);
   activeOrderIdRef.current = activeOrderId;
 
   const paymentMethodRef = useRef(paymentMethod);
   paymentMethodRef.current = paymentMethod;
 
-  const handleLifecycleEvent = useCallback((event: PaymentLifecycleEvent) => {
-    if (event.orderId !== activeOrderIdRef.current) return;
-    const expectedProvider = paymentMethodRef.current === 'btc' ? 'btcpay' : 'nowpayments';
-    if (event.provider !== expectedProvider) return;
+  const handleLifecycleEvent = useCallback(
+    (event: PaymentLifecycleEvent) => {
+      if (event.orderId !== activeOrderIdRef.current) return;
+      const expectedProvider = paymentMethodRef.current === 'btc' ? 'btcpay' : 'nowpayments';
+      if (event.provider !== expectedProvider) return;
 
-    if (event.status === 'expired' || event.status === 'invalid') {
-      const message =
-        event.status === 'expired'
-          ? 'BTC invoice expired. You can start a new payment.'
-          : 'BTC invoice was marked invalid. Please try again.';
-      toast.error(message, { position: 'bottom-center', autoClose: 5000 });
-      setPaymentStatus('idle');
-      if (paymentMethodRef.current === 'btc') btcDeposit.resetPayment();
-      else usdtDeposit.resetPayment();
-      return;
-    }
+      if (event.status === 'expired' || event.status === 'invalid') {
+        const message =
+          event.status === 'expired'
+            ? 'BTC invoice expired. You can start a new payment.'
+            : 'BTC invoice was marked invalid. Please try again.';
+        toast.error(message, { position: 'bottom-center', autoClose: 5000 });
+        setPaymentStatus('idle');
+        if (paymentMethodRef.current === 'btc') btcDeposit.resetPayment();
+        else usdtDeposit.resetPayment();
+        return;
+      }
 
-    if (event.status === 'waiting' || event.status === 'confirming') {
-      setPaymentStatus(event.status);
-    }
-  }, [btcDeposit, usdtDeposit]);
+      if (event.status === 'waiting' || event.status === 'confirming') {
+        setPaymentStatus(event.status);
+      }
+    },
+    [btcDeposit, usdtDeposit]
+  );
 
-  const { tickets, stats, loading, refreshTickets, refreshTicketsSilent, addTicket, requestHighEntropyAttempt, highEntropyPending } = useLotto({
+  const {
+    tickets,
+    stats,
+    loading,
+    refreshTickets,
+    refreshTicketsSilent,
+    addTicket,
+    requestHighEntropyAttempt,
+    highEntropyPending,
+    highEntropyQueued,
+    hashrateRefreshToken,
+    liveActivityFeed,
+  } = useLotto({
     onPaymentLifecycle: handleLifecycleEvent,
   });
 
@@ -124,7 +140,6 @@ export default function LottoDashboardPage() {
     prevTicketsLengthRef.current = tickets.length;
   }, [tickets, isAnyPending, resetActivePayment]);
 
-  // Auto-collapse modal a few seconds after payment is "confirming" so user can see the skeleton on the dashboard
   const CONFIRMING_COLLAPSE_SEC = 4;
   useEffect(() => {
     if (paymentStatus !== 'confirming' || !showBuyModal) return;
@@ -204,39 +219,38 @@ export default function LottoDashboardPage() {
     setShowBuyModal(false);
   };
 
-  const showPaymentSkeleton =
-    isPending && (paymentStatus === 'waiting' || paymentStatus === 'confirming');
+  const showPaymentSkeleton = isPending && (paymentStatus === 'waiting' || paymentStatus === 'confirming');
 
   const handlePlusUltra = async (ticket: LottoTicket) => {
     try {
-      toast.info('Requesting high entropy from Bitcoin mining...', { position: 'bottom-center', autoClose: 2000 });
       const result = await requestHighEntropyAttempt(ticket);
-      toast.success(result.message || 'Plus Ultra initiated.', { position: 'bottom-center', autoClose: 3000 });
-      await refreshTicketsSilent();
+      if (result.status === 'queued') {
+        const estimatedMinutes = estimatedWaitMinutes(result.queuePosition);
+        toast.info(
+          `Plus Ultra queued -- Position #${result.queuePosition}. Estimated wait: ~${estimatedMinutes}m.`,
+          { position: 'bottom-center', autoClose: 4000 }
+        );
+      } else {
+        toast.info('Plus Ultra mining in progress...', { position: 'bottom-center', autoClose: 3000 });
+      }
     } catch (err: unknown) {
-      const res = err && typeof err === 'object' && err !== null && 'response' in err ? (err as { response?: { status?: number; data?: { message?: string } } }).response : undefined;
+      const res =
+        err && typeof err === 'object' && err !== null && 'response' in err
+          ? (err as { response?: { status?: number; data?: { message?: string } } }).response
+          : undefined;
       const msg = res?.data?.message ?? (err instanceof Error ? err.message : 'Error initiating Plus Ultra.');
-      toast.error(msg, {
-        position: 'bottom-center',
-        autoClose: 4000,
-      });
+      toast.error(msg, { position: 'bottom-center', autoClose: 4000 });
       if (res?.status === 403) await refreshTicketsSilent();
     }
   };
 
-  const activeTickets = tickets.filter(
-    t => t.status === 'active' && new Date(t.validUntil) > new Date()
-  );
-  const myTotalAttempts = activeTickets.reduce(
-    (sum, t) => sum + (t.nonceTotal ?? t.totalAttempts ?? 0),
-    0
-  );
+  const activeTickets = tickets.filter(t => t.status === 'active' && new Date(t.validUntil) > new Date());
+  const myTotalHashes = activeTickets.reduce((sum, t) => sum + (t.nonceTotal ?? t.totalAttempts ?? 0), 0);
 
   if (!isSessionActive) return null;
 
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif" }} className="min-h-screen bg-[#07070a] pt-16 text-white">
-      {/* Page header */}
       <div className="border-b border-white/[0.05]">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -273,11 +287,9 @@ export default function LottoDashboardPage() {
                   className="text-3xl font-bold tabular-nums text-white sm:text-4xl lg:text-5xl"
                   style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
-                  {formatExact(myTotalAttempts)}
+                  {formatExact(myTotalHashes)}
                 </div>
-                <div className="mt-0.5 text-[10px] uppercase tracking-wider text-white/35">
-                  Total attempts
-                </div>
+                <div className="mt-0.5 text-[10px] uppercase tracking-wider text-white/35">Total hashes</div>
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
@@ -305,18 +317,32 @@ export default function LottoDashboardPage() {
         </div>
       </div>
 
+      <div className="border-b border-white/[0.04]">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+            <div className="lg:col-span-2">
+              <GlobalHashrateChart hashrateRefreshToken={hashrateRefreshToken} accentColor="#2dd4bf" />
+            </div>
+            <div className="lg:col-span-1">
+              <LiveAttemptFeed items={liveActivityFeed} className="min-h-[280px] lg:min-h-0" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <LottoDashboardContent
         loading={loading}
         tickets={tickets}
         stats={stats}
         highEntropyPending={highEntropyPending}
+        highEntropyQueued={highEntropyQueued}
         showPaymentSkeleton={showPaymentSkeleton}
+        hashrateRefreshToken={hashrateRefreshToken}
         onBuyTicket={() => setShowBuyModal(true)}
         onOpenDetails={id => navigate(`/lotto/${id}`)}
         onPlusUltra={handlePlusUltra}
       />
 
-      {/* Footer */}
       <footer className="border-t border-white/[0.04] py-10">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <Info className="mx-auto mb-3 h-3.5 w-3.5 text-white/10" />
@@ -396,7 +422,9 @@ export default function LottoDashboardPage() {
                 }}
                 placeholder="Bitcoin address (bc1q...)"
                 className={`mb-4 w-full rounded-xl border bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:ring-1 ${
-                  redeemError ? 'border-red-500/60 focus:border-red-500/50' : 'border-white/10 focus:border-amber-500/50 focus:ring-amber-500/20'
+                  redeemError
+                    ? 'border-red-500/60 focus:border-red-500/50'
+                    : 'border-white/10 focus:border-amber-500/50 focus:ring-amber-500/20'
                 }`}
                 style={{ fontFamily: "'JetBrains Mono', monospace" }}
               />
