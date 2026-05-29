@@ -42,7 +42,7 @@ export function useListApiKeys({ apiKeys, onApiKeysChange, onError, onSuccess }:
       onError(''); // Clear previous errors
       const token = localStorage.getItem('token');
       await axios.put(
-        `${API_URL}api/v1/caos/update-key/${editingKey}`,
+        `${API_URL}/caos/update-key/${editingKey}`,
         { webhook: data.webhook },
         {
           headers: {
@@ -82,7 +82,7 @@ export function useListApiKeys({ apiKeys, onApiKeysChange, onError, onSuccess }:
       setIsDeleting(true);
       onError(''); // Clear previous errors
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}api/v1/caos/delete-key/${deletingKey.id}`, {
+      await axios.delete(`${API_URL}/caos/delete-key/${deletingKey.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
