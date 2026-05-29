@@ -39,7 +39,7 @@ export default function ApiKeys() {
     try {
       setIsLoadingKeys(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}api/v1/caos/list-keys`, {
+      const response = await axios.get(`${API_URL}/caos/list-keys`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
