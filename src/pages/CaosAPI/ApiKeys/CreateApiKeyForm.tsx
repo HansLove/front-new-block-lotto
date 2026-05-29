@@ -40,7 +40,7 @@ export default function CreateApiKeyForm({ onApiKeyCreated, onError, onSuccess }
     try {
       onError(''); // Clear previous errors
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_URL}api/v1/caos/generate-key`, data, {
+      const response = await axios.post(`${API_URL}/caos/generate-key`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
