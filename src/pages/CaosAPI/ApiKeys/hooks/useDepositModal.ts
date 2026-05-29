@@ -35,7 +35,7 @@ export function useDepositModal() {
       },
     };
 
-    const response = await axios.post(`${API_URL}api/v1/payment/nowpayments`, payload, options);
+    const response = await axios.post(`${API_URL}/payment/nowpayments`, payload, options);
     return response.data;
   }, []);
 
